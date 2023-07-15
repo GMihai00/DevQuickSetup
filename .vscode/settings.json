@@ -1,0 +1,8 @@
+{
+    "rust-analyzer.linkedProjects": [
+        ".\\win_quick_setup\\Cargo.toml",
+        ".\\win_quick_setup\\Cargo.toml",
+        ".\\win_quick_setup\\Cargo.toml",
+        ".\\win_quick_setup\\Cargo.toml"
+    ]
+}

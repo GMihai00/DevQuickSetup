@@ -1,0 +1,6 @@
+[
+    { "exec": "winget install BurntSushi.ripgrep.MSVC" },
+    { "exec": "winget install Microsoft.WinDbgC" },
+    { "exec": "winget install Microsoft.Sysinternals.ProcessExplorer" },
+    { "exec": "winget install Microsoft.Sysinternals.ProcessMonitor" }
+]
