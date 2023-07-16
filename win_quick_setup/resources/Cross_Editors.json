@@ -1,0 +1,8 @@
+[
+    { "exec": {
+        "install_run": "winget install Microsoft.VisualStudioCode",
+        "uninstall_run": "winget uninstall Microsoft.VisualStudioCode",
+        "update_run": "winget update Microsoft.VisualStudioCode"
+        }
+    }
+]

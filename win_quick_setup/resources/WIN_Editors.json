@@ -1,0 +1,8 @@
+[
+    { "exec": {
+        "install_run": "winget install Microsoft.VisualStudio.2022.Community",
+        "uninstall_run": "winget uninstall Microsoft.VisualStudio.2022.Community",
+        "update_run": "winget update Microsoft.VisualStudio.2022.Community"
+        }
+    }
+]

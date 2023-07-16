@@ -1,0 +1,8 @@
+[
+    { "exec": {
+        "install_run": "winget install Rustlang.Rustup",
+        "uninstall_run": "winget uninstall Rustlang.Rustup",
+        "update_run": "winget update Rustlang.Rustup"
+        }
+    }
+]
