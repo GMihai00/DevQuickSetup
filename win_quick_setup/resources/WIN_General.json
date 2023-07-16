@@ -1,0 +1,26 @@
+[
+    { "exec": {
+        "install_run": "winget install BurntSushi.ripgrep.MSVC",
+        "uninstall_run": "winget uninstall BurntSushi.ripgrep.MSVC",
+        "update_run": "winget update BurntSushi.ripgrep.MSVC"
+        }
+    },
+    { "exec": {
+        "install_run": "winget install Microsoft.WinDbgC",
+        "uninstall_run": "winget uninstall Microsoft.WinDbgC",
+        "update_run": "winget update Microsoft.WinDbgC"
+        }
+    },
+    { "exec": {
+        "install_run": "winget install Microsoft.Sysinternals.ProcessExplorer",
+        "uninstall_run": "winget uninstall Microsoft.Sysinternals.ProcessExplorer",
+        "update_run": "winget update Microsoft.Sysinternals.ProcessExplorer"
+        }
+    },
+    { "exec": {
+        "install_run": "winget install Microsoft.Sysinternals.ProcessMonitor",
+        "uninstall_run": "winget uninstall Microsoft.Sysinternals.ProcessMonitor",
+        "update_run": "winget update Microsoft.Sysinternals.ProcessMonitor"
+        }
+    }
+]
