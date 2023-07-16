@@ -1,16 +1,6 @@
 [
-    {"include": {"config_path": "./resources/Cross_Editors.json"}},
+    {"include": {"config_path": "Cross_Editors.json"} },
 
-    { "exec": {
-        "install_run": "winget install Python.Python.3.11",
-        "uninstall_run": "winget uninstall Python.Python.3.11",
-        "update_run": "winget update Python.Python.3.11"
-        }
-    },
-    { "exec": {
-        "install_run": "winget install Anaconda.Anaconda3",
-        "uninstall_run": "winget uninstall Anaconda.Anaconda3",
-        "update_run": "winget update Anaconda.Anaconda3"
-        }
-    }
+    { "winget": { "package": "Python.Python.3.11"} },
+    { "winget": { "package": "Anaconda.Anaconda3"} }
 ]

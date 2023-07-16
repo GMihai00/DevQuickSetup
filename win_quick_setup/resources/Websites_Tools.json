@@ -1,0 +1,4 @@
+[
+    { "winget": { "package": "OpenJS.NodeJS"} },
+    { "winget": { "package": "Docker.DockerDesktop "} }
+]

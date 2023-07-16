@@ -5,9 +5,11 @@ use serde_json::Value;
 use std::error::Error;
 use commands::common::{ActionFn, InstallActionType};
 use commands::exec_command::run_command;
+use commands::winget_command::winget_run;
 
-const ACTION_MAP: &[(&str, ActionFn); 1] = &[
-    ("exec", run_command)
+const ACTION_MAP: &[(&str, ActionFn); 2] = &[
+    ("exec", run_command),
+    ("winget", winget_run)
 ];
 
 pub fn render(json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
