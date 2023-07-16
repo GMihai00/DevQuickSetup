@@ -1,4 +1,5 @@
 mod rendering;
+mod commands;
 
 use serde_json::Value;
 use std::error::Error;
@@ -6,7 +7,8 @@ use std::fs::File;
 use std::io::Read;
 use std::env;
 
-use crate::rendering::{render, InstallActionType};
+use commands::common::InstallActionType;
+use rendering::render;
 
 fn main() -> Result<(), Box<dyn Error>> {
 

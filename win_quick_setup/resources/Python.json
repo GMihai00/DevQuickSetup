@@ -1,4 +1,6 @@
 [
+    {"include": {"config_path": "./resources/Cross_Editors.json"}},
+
     { "exec": {
         "install_run": "winget install Python.Python.3.11",
         "uninstall_run": "winget uninstall Python.Python.3.11",
