@@ -1,0 +1,5 @@
+[
+    {"include": {"config_path": "WIN_General.json"} },
+    {"include": {"config_path": "WIN_Editors.json"} },
+    "ADD VCKPG HERE! https://vcpkg.io/en/getting-started"
+]

@@ -1,4 +1,6 @@
 [
+    {"include": {"config_path": "General.json"} },
+
     { "winget": { "package": "BurntSushi.ripgrep.MSVC"} },
     { "winget": { "package": "Microsoft.WinDbgC"} },
     { "winget": { "package": "Microsoft.Sysinternals.ProcessExplorer"} },
