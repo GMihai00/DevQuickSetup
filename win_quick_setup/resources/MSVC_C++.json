@@ -1,5 +1,9 @@
 [
     {"include": {"config_path": "WIN_General.json"} },
     {"include": {"config_path": "WIN_Editors.json"} },
-    "ADD VCKPG HERE! https://vcpkg.io/en/getting-started"
+    "need to change directory for this one",
+    {"exec": { "install_run": "git clone https://github.com/Microsoft/vcpkg.git"} },
+    {"exec": { "install_run": ".\\vcpkg\\bootstrap-vcpkg.bat"}},
+    "add path to vcpkg to path enviromental variable",
+    {"exec": {"install_run": "vcpkg integrate install"}}
 ]

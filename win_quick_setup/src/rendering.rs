@@ -9,7 +9,7 @@ use serde_json::{from_value,Value};
 use commands::common::{ActionFn, InstallActionType};
 use commands::exec_command::run_command;
 use commands::winget_command::winget_run;
-
+use commands::update_registry_command::update_registry;
 
 use serde_derive::{Deserialize, Serialize};
 #[derive(Deserialize, Serialize)]
@@ -38,10 +38,11 @@ fn include(json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dy
 }
 
 
-const ACTION_MAP: &[(&str, ActionFn); 3] = &[
+const ACTION_MAP: &[(&str, ActionFn); 4] = &[
     ("exec", run_command),
     ("winget", winget_run),
-    ("include", include)
+    ("include", include),
+    ("reg_update", update_registry)
 ];
 
 pub fn render(json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {

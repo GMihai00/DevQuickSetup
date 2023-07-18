@@ -8,8 +8,18 @@ use std::process::Command;
 #[derive(Deserialize, Serialize)]
 struct ExecCommand {
     install_run: String,
+    #[serde(default = "default_uninstall_run")]
     uninstall_run: String,
+    #[serde(default = "default_update_run")]
     update_run: String,
+}
+
+fn default_uninstall_run() -> String {
+    return String::new();
+}
+
+fn default_update_run() -> String {
+    return String::new();
 }
 
 impl ExecCommand {
@@ -28,6 +38,11 @@ impl ExecCommand {
         }
 
         println!("Executing command: {}", exec);
+
+        if exec.len() == 0
+        {
+            return Ok(true);
+        }
 
         let exitcode: Option<i32> = if cfg!(target_os = "windows") {
             Command::new("cmd")
