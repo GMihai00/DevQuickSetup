@@ -1,15 +1,47 @@
 
 use super::commands;
 
-use serde_json::Value;
 use std::error::Error;
+use std::fs::File;
+use std::io::Read;
+use serde_json::{from_value,Value};
+
 use commands::common::{ActionFn, InstallActionType};
 use commands::exec_command::run_command;
 use commands::winget_command::winget_run;
 
-const ACTION_MAP: &[(&str, ActionFn); 2] = &[
+
+use serde_derive::{Deserialize, Serialize};
+#[derive(Deserialize, Serialize)]
+
+struct IncludeCommand {
+    config_path: String
+}
+
+impl IncludeCommand {
+    pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
+        let mut file = File::open(&self.config_path).expect(&format!("Failed to open file {}", &self.config_path));
+        let mut contents = String::new();
+        file.read_to_string(&mut contents)
+            .expect("Failed to read file");
+    
+        let json_data: Value = serde_json::from_str(&contents).expect("Failed to parse JSON");
+    
+        return render(&json_data, &action);
+    }
+}
+
+fn include(json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
+    let cmd: IncludeCommand = from_value(json_data.clone())?;
+
+    return cmd.execute(action);
+}
+
+
+const ACTION_MAP: &[(&str, ActionFn); 3] = &[
     ("exec", run_command),
-    ("winget", winget_run)
+    ("winget", winget_run),
+    ("include", include)
 ];
 
 pub fn render(json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
