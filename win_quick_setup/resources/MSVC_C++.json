@@ -1,12 +1,9 @@
 [
     {"include": {"config_path": "WIN_General.json"} },
-    "e cam lunga, de adaugat comanda separata refresh_chchops1env_command.rs ca o sa fol cam des",
-    {"ps1": {"install_run": "\"Set-ExecutionPolicy Bypass -Scope Process; Import-Module $env:ProgramData\\\\chocolatey\\\\helpers\\\\chocolateyProfile.psm1;refreshenv\""}},
     "need to change directory for this one.",
-    "git still not recognized here, changes for refreshenv do not persist...",
-    {"ps1": { "install_run": "git clone https://github.com/Microsoft/vcpkg.git"} },
+    {"ps1": { "install_run": "git clone https://github.com/Microsoft/vcpkg.git", "refresh_env": true } },
     {"ps1": { "install_run": "./vcpkg/bootstrap-vcpkg.bat"}},
     {"ps1": { "install_run": "setx PATH \"%PATH%;$PWD\\\\vcpkg\" /M" }},
-    {"ps1": { "install_run": "vcpkg integrate install"}},
+    {"ps1": { "install_run": "vcpkg integrate install", "refresh_env": true}},
     {"include": {"config_path": "WIN_Editors.json"} }
 ]

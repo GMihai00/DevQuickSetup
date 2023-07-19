@@ -5,6 +5,9 @@ use serde_json::{from_value, Value};
 use std::env;
 use std::error::Error;
 use std::process::Command;
+
+const REFRESHENV_COMMAND: &str ="Set-ExecutionPolicy Bypass -Scope Process; Import-Module $env:ProgramData\\chocolatey\\helpers\\chocolateyProfile.psm1;refreshenv;";
+
 #[derive(Deserialize, Serialize)]
 struct PowershellCommand {
     install_run: String,
@@ -12,6 +15,8 @@ struct PowershellCommand {
     uninstall_run: String,
     #[serde(default = "default_update_run")]
     update_run: String,
+    #[serde(default = "default_refresh_env")]
+    refresh_env: bool
 }
 
 fn default_uninstall_run() -> String {
@@ -20,6 +25,10 @@ fn default_uninstall_run() -> String {
 
 fn default_update_run() -> String {
     return String::new();
+}
+
+fn default_refresh_env() -> bool {
+    return false;
 }
 
 impl PowershellCommand {
@@ -37,7 +46,7 @@ impl PowershellCommand {
             }
         }
 
-        println!("Executing command: {}", exec);
+        println!("Executing command: {} refresh_emv: {}", exec, self.refresh_env);
 
         if exec.len() == 0
         {
@@ -55,14 +64,30 @@ impl PowershellCommand {
         })
         .expect("Invalid command.");    
     
-        let exitcode = Command::new("powershell")
-            .arg("-Command")
-            .arg(exec)
-            .args(args)
-            .current_dir(env::current_dir()?)
-            .status()
-            .map(|exitcode| exitcode.code())
-            .unwrap_or(Some(-1));
+        let exitcode: Option<i32>;
+        if self.refresh_env
+        {
+            exitcode = Command::new("powershell")
+                .arg("-Command")
+                .arg(REFRESHENV_COMMAND)
+                .arg(exec)
+                .args(args)
+                .current_dir(env::current_dir()?)
+                .status()
+                .map(|exitcode| exitcode.code())
+                .unwrap_or(Some(-1));
+        }
+        else
+        {
+            exitcode = Command::new("powershell")
+                .arg("-Command")
+                .arg(exec)
+                .args(args)
+                .current_dir(env::current_dir()?)
+                .status()
+                .map(|exitcode| exitcode.code())
+                .unwrap_or(Some(-1));
+        }
 
         return Ok(exitcode.is_some_and(|x| x == 0));
     }
