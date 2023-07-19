@@ -17,7 +17,9 @@ struct PowershellCommand {
     #[serde(default = "default_update_run")]
     update_run: String,
     #[serde(default = "default_refresh_env")]
-    refresh_env: bool
+    refresh_env: bool,
+    #[serde(default = "default_preparse")]
+    preparse: bool
 }
 
 fn default_uninstall_run() -> String {
@@ -32,39 +34,12 @@ fn default_refresh_env() -> bool {
     return false;
 }
 
+fn default_preparse() -> bool {
+    return true;
+}
+
 impl PowershellCommand {
-    pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
-        let exec: &String;
-        match action {
-            InstallActionType::INSTALL => {
-                exec = &self.install_run;
-            }
-            InstallActionType::UNINSTALL => {
-                exec = &self.uninstall_run;
-            }
-            InstallActionType::UPDATE => {
-                exec = &self.update_run;
-            }
-        }
-
-        println!("Executing command: {} refresh_emv: {}", exec, self.refresh_env);
-
-        if exec.len() == 0
-        {
-            return Ok(true);
-        }
-        
-        let (exec, args) = shell_words::split(&exec)
-        .map(|parsed| {
-            parsed.split_first()
-                .map(|(exec, args)| (exec.to_string(), args.to_vec()))
-        })
-        .unwrap_or_else(|err| {
-            eprintln!("Error parsing command: {:?}", err);
-            panic!("Failed to parse cmdline {}", &exec.as_str());
-        })
-        .expect("Invalid command.");    
-    
+    fn run_command(&self, exec: & String, args: & Vec<String>) -> Result<bool, Box<dyn Error>> {
         let exitcode: Option<i32>;
         if self.refresh_env
         {
@@ -91,6 +66,46 @@ impl PowershellCommand {
         }
 
         return Ok(exitcode.is_some_and(|x| x == 0));
+    }
+    
+    pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
+        let exec: &String;
+        match action {
+            InstallActionType::INSTALL => {
+                exec = &self.install_run;
+            }
+            InstallActionType::UNINSTALL => {
+                exec = &self.uninstall_run;
+            }
+            InstallActionType::UPDATE => {
+                exec = &self.update_run;
+            }
+        }
+
+        println!("Executing command: {} refresh_emv: {}", exec, self.refresh_env);
+
+        if exec.len() == 0
+        {
+            return Ok(true);
+        }
+        
+        if self.preparse
+        {
+            let (exec, args) = shell_words::split(&exec)
+            .map(|parsed| {
+                parsed.split_first()
+                    .map(|(exec, args)| (exec.to_string(), args.to_vec()))
+            })
+            .unwrap_or_else(|err| {
+                eprintln!("Error parsing command: {:?}", err);
+                panic!("Failed to parse cmdline {}", &exec.as_str());
+            })
+            .expect("Invalid command."); 
+            
+            return self.run_command(&exec, &args);
+        }
+    
+        return self.run_command(&exec, &Vec::new());
     }
 }
 

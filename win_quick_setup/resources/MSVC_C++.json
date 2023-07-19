@@ -3,8 +3,7 @@
     "need to change directory for this one.",
     {"ps1": { "install_run": "git clone https://github.com/Microsoft/vcpkg.git", "refresh_env": true } },
     {"ps1": { "install_run": "./vcpkg/bootstrap-vcpkg.bat"}},
-    "probleme aici la parser ca imi da split aiurea si ajunge \\vcpkg sa fie separat... Optiune no parse I quess sau comanda de update pe cheie",
-    {"ps1": { "install_run": "setx PATH \"\"%PATH%;$PWD\\\\vcpkg\"\" /M" }},
+    {"ps1": { "install_run": "setx PATH \"%PATH%;$PWD\\\\vcpkg\" /M", "preparse": false }},
     {"ps1": { "install_run": "vcpkg integrate install", "refresh_env": true}},
     {"include": {"config_path": "WIN_Editors.json"} }
 ]
