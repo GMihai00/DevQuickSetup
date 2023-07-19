@@ -4,5 +4,6 @@
     { "winget": { "package": "BurntSushi.ripgrep.MSVC"} },
     { "winget": { "package": "Microsoft.WinDbgC"} },
     { "winget": { "package": "Microsoft.Sysinternals.ProcessExplorer"} },
-    { "winget": { "package": "Microsoft.Sysinternals.ProcessMonitor"} }
+    { "winget": { "package": "Microsoft.Sysinternals.ProcessMonitor"} },
+    { "ps1": { "install_run" : "\"Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))\""}}
 ]

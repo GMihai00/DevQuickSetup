@@ -6,7 +6,7 @@ use std::env;
 use std::error::Error;
 use std::process::Command;
 #[derive(Deserialize, Serialize)]
-struct ExecCommand {
+struct PowershellCommand {
     install_run: String,
     #[serde(default = "default_uninstall_run")]
     uninstall_run: String,
@@ -22,7 +22,7 @@ fn default_update_run() -> String {
     return String::new();
 }
 
-impl ExecCommand {
+impl PowershellCommand {
     pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
         let exec: &String;
         match action {
@@ -53,22 +53,23 @@ impl ExecCommand {
             eprintln!("Error parsing command: {:?}", err);
             panic!("Failed to parse cmdline {}", &exec.as_str());
         })
-        .expect("Invalid command.");
+        .expect("Invalid command.");    
     
-        let status = Command::new(&exec)
+        let exitcode = Command::new("powershell")
+            .arg("-Command")
+            .arg(exec)
             .args(args)
             .current_dir(env::current_dir()?)
-            .spawn()
-            .expect("Failed to execute process")
-            .wait()
-            .expect("Failed to wait for process");
+            .status()
+            .map(|exitcode| exitcode.code())
+            .unwrap_or(Some(-1));
 
-        return Ok(status.success());
+        return Ok(exitcode.is_some_and(|x| x == 0));
     }
 }
 
-pub fn run_command(json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
-    let cmd: ExecCommand = from_value(json_data.clone())?;
+pub fn run_ps1_command(json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
+    let cmd: PowershellCommand = from_value(json_data.clone())?;
 
     return cmd.execute(action);
 }
