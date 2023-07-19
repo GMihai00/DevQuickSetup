@@ -6,6 +6,7 @@ use std::env;
 use std::error::Error;
 use std::process::Command;
 
+// if in the feature chocolatey will no longer be installed in env:ProgramData\\chocolatey this path will need to be changed
 const REFRESHENV_COMMAND: &str ="Set-ExecutionPolicy Bypass -Scope Process; Import-Module $env:ProgramData\\chocolatey\\helpers\\chocolateyProfile.psm1;refreshenv;";
 
 #[derive(Deserialize, Serialize)]
