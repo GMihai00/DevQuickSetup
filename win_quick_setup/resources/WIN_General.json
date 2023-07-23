@@ -5,5 +5,8 @@
     { "winget": { "package": "Microsoft.WinDbgC"} },
     { "winget": { "package": "Microsoft.Sysinternals.ProcessExplorer"} },
     { "winget": { "package": "Microsoft.Sysinternals.ProcessMonitor"} },
+    { "winget": { "package": "RARLab.WinRAR"} },
+    { "winget": { "package": "7zip.7zip"} },
+    { "winget": { "package": "Brave.Brave"} },
     { "ps1": { "install_run" : "\"Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))\""}}
 ]

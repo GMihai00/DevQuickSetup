@@ -15,6 +15,15 @@ use commands::vcpkg_command::vcpkg_command;
 use commands::dir_command::create_dir;
 
 use serde_derive::{Deserialize, Serialize};
+
+use std::collections::HashSet;
+use lazy_static::lazy_static;
+use std::sync::Mutex;
+
+lazy_static! {
+    static ref USED_CONFIG_PATHS: Mutex<HashSet<String>> = Mutex::new(HashSet::new());
+}
+
 #[derive(Deserialize, Serialize)]
 
 struct IncludeCommand {
@@ -36,7 +45,16 @@ impl IncludeCommand {
 
 fn include(json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
     let cmd: IncludeCommand = from_value(json_data.clone())?;
-
+    
+    {
+        let config_path = cmd.config_path.clone();
+        let mut used_paths = USED_CONFIG_PATHS.lock().unwrap();
+        if used_paths.contains(&config_path) {
+            return Ok(true)
+        }
+        used_paths.insert(config_path);
+    }
+    
     return cmd.execute(action);
 }
 
