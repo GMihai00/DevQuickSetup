@@ -1,0 +1,10 @@
+[
+    "Pentru restart (taiat -NoRestart)",
+    "Daca nu am setata o cheie de registru atunci adaugami comanda la run",
+    "De adaugat comanda conditionala (in rendering)",
+    "De vazut comanda de update_registry sa pot adauga in cheia de run comanda de e rulata acum",
+    "Trebuie adaugat comanda care citeste cheie de registru si salveaza rezultat intr-o variabila",
+    "De vazut cum salvez variabile globale, most likely pot sa pun intr-un json eventual",
+    "Enable Hyper-V",
+    { "ps1": { "install_run" : "\"Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All\""} }
+]

@@ -1,4 +1,5 @@
 [
+    {"include": {"config_path": "VMs.json"}},
     {"include": {"config_path": "General.json"} },
 
     { "winget": { "package": "BurntSushi.ripgrep.MSVC"} },

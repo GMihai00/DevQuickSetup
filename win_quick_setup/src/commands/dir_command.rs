@@ -16,7 +16,6 @@ fn default_overwrite_option() -> bool {
     return false;
 }
 
-
 impl DirCommand {
     fn cleanup(&self) -> bool {
     
