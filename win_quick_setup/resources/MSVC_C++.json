@@ -1,9 +1,10 @@
 [
     {"include": {"config_path": "WIN_General.json"} },
-    "need to change directory for this one.",
-    {"ps1": { "install_run": "git clone https://github.com/Microsoft/vcpkg.git", "refresh_env": true } },
-    {"ps1": { "install_run": "./vcpkg/bootstrap-vcpkg.bat"}},
-    {"ps1": { "install_run": "setx PATH \"%PATH%;$PWD\\\\vcpkg\" /M", "preparse": false }},
+    {"dir": {"path": "C:\\PathPrograms\\", "overwrite": false }},
+    {"ps1": { "install_run": "git clone https://github.com/Microsoft/vcpkg.git", "refresh_env": true, "dir": "C:\\PathPrograms\\" } },
+    {"ps1": { "install_run": "C:\\\\PathPrograms\\\\vcpkg\\\\bootstrap-vcpkg.bat"}},
+    {"ps1": { "install_run": "setx PATH \"%PATH%;C:\\\\PathPrograms\\\\vcpkg\" /M", "preparse": false }},
     {"ps1": { "install_run": "vcpkg integrate install", "refresh_env": true}},
+    {"vcpkg": { "module": "nlohmann-json"} },
     {"include": {"config_path": "WIN_Editors.json"} }
 ]

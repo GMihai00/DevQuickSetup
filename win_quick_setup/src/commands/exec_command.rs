@@ -12,6 +12,8 @@ struct ExecCommand {
     uninstall_run: String,
     #[serde(default = "default_update_run")]
     update_run: String,
+    #[serde(default = "default_dir")]
+    dir: String
 }
 
 fn default_uninstall_run() -> String {
@@ -21,6 +23,15 @@ fn default_uninstall_run() -> String {
 fn default_update_run() -> String {
     return String::new();
 }
+
+fn default_dir() -> String {
+    if let Ok(current_dir) = env::current_dir() {
+       return current_dir.to_string_lossy().to_string()
+    } else {
+        return String::new();
+    }
+}
+
 
 impl ExecCommand {
     pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
@@ -57,7 +68,7 @@ impl ExecCommand {
     
         let status = Command::new(&exec)
             .args(args)
-            .current_dir(env::current_dir()?)
+            .current_dir(&self.dir)
             .spawn()
             .expect("Failed to execute process")
             .wait()

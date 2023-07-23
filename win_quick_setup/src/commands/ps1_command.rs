@@ -19,7 +19,9 @@ struct PowershellCommand {
     #[serde(default = "default_refresh_env")]
     refresh_env: bool,
     #[serde(default = "default_preparse")]
-    preparse: bool
+    preparse: bool,
+    #[serde(default = "default_dir")]
+    dir: String
 }
 
 fn default_uninstall_run() -> String {
@@ -38,6 +40,15 @@ fn default_preparse() -> bool {
     return true;
 }
 
+fn default_dir() -> String {
+    if let Ok(current_dir) = env::current_dir() {
+        return current_dir.to_string_lossy().to_string()
+    } else {
+        return String::new();
+    }
+}
+
+
 impl PowershellCommand {
     fn run_command(&self, exec: & String, args: & Vec<String>) -> Result<bool, Box<dyn Error>> {
         let exitcode: Option<i32>;
@@ -48,7 +59,7 @@ impl PowershellCommand {
                 .arg(REFRESHENV_COMMAND)
                 .arg(exec)
                 .args(args)
-                .current_dir(env::current_dir()?)
+                .current_dir(&self.dir)
                 .status()
                 .map(|exitcode| exitcode.code())
                 .unwrap_or(Some(-1));
@@ -59,7 +70,7 @@ impl PowershellCommand {
                 .arg("-Command")
                 .arg(exec)
                 .args(args)
-                .current_dir(env::current_dir()?)
+                .current_dir(&self.dir)
                 .status()
                 .map(|exitcode| exitcode.code())
                 .unwrap_or(Some(-1));
