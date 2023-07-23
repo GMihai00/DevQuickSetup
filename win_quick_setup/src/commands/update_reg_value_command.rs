@@ -3,31 +3,15 @@ use super::common::InstallActionType;
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
 use std::error::Error;
+use std::io;
 
 use winreg::enums::{HKEY_CURRENT_USER, KEY_READ, KEY_WRITE};
 use winreg::RegKey;
 #[derive(Deserialize, Serialize)]
 struct UpdateRegistryCommand {
-    registry_path: String,
+    reg_path: String,
     key_name: String,
-    #[serde(default = "default_added_string_value")]
-    added_string_value: String,
-    #[serde(default = "default_added_int_value")]
-    added_int_value: i32,
-    #[serde(default = "default_should_overwrite")]
-    should_overwrite: bool
-}
-
-fn default_added_string_value() -> String {
-    return String::new();
-}
-
-fn default_added_int_value() -> i32 {
-    return 0;
-}
-
-fn default_should_overwrite() -> bool {
-    return false;
+    value: String,
 }
 
 #[allow(dead_code)]
@@ -45,26 +29,33 @@ fn read_registry_key() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-#[allow(dead_code)]
-fn write_registry_key() -> Result<(), Box<dyn std::error::Error>> {
-    // Connect to the HKEY_CURRENT_USER registry key
-    let hklm = RegKey::predef(HKEY_CURRENT_USER);
-
-    // Create or open a specific subkey with write access
-    let subkey = hklm.open_subkey_with_flags("Software\\MyApp", KEY_WRITE)?;
-
-    // Set a new string value under the subkey
-    subkey.set_value("MySetting", &"Hello, Registry!")?;
-
-    println!("Value written successfully.");
-
-    Ok(())
-}
-
 impl UpdateRegistryCommand {
+    
     pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
-         // TODO: Implement this function
-        unimplemented!();
+        
+        match action {
+            InstallActionType::INSTALL => {}
+            _ => { return Ok(true) }
+        }
+
+        let hklm = RegKey::predef(HKEY_CURRENT_USER);
+        
+        let subkey = hklm.open_subkey_with_flags(&self.reg_path, KEY_WRITE)?;
+        
+        match subkey.delete_value(&self.key_name) {
+            Err(err) => match err.kind() {
+                io::ErrorKind::NotFound => {}
+                _ => { 
+                        println!("Failed to delete registry value: {}", err);
+                        return Ok(false);
+                    }
+            }
+            _ => {}
+        }
+        
+        subkey.set_value(&self.key_name, &self.value)?;
+        
+        return Ok(true);
     }
 }
 

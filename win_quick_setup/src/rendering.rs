@@ -9,7 +9,7 @@ use serde_json::{from_value,Value};
 use commands::common::{ActionFn, InstallActionType};
 use commands::exec_command::run_command;
 use commands::winget_command::winget_run;
-use commands::update_registry_command::update_registry;
+use commands::update_reg_value_command::update_registry;
 use commands::ps1_command::run_ps1_command;
 use commands::vcpkg_command::vcpkg_command;
 use commands::dir_command::create_dir;
@@ -58,15 +58,15 @@ fn include(json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dy
     return cmd.execute(action);
 }
 
-
-const ACTION_MAP: &[(&str, ActionFn); 7] = &[
+const ACTION_MAP: &[(&str, ActionFn); 8] = &[
     ("exec", run_command),
     ("winget", winget_run),
     ("include", include),
     ("reg_update", update_registry),
     ("ps1", run_ps1_command),
     ("vcpkg", vcpkg_command),
-    ("dir", create_dir)
+    ("dir", create_dir),
+    ("set_reg_val", update_registry)
 ];
 
 pub fn render(json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {

@@ -6,5 +6,11 @@
     "Trebuie adaugat comanda care citeste cheie de registru si salveaza rezultat intr-o variabila",
     "De vazut cum salvez variabile globale, most likely pot sa pun intr-un json eventual",
     "Enable Hyper-V",
+    { "set_reg_val": {
+            "reg_path": "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+            "key_name": "QuickSetup",
+            "value": "CURRENT CMD"
+        }
+    },
     { "ps1": { "install_run" : "\"Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All\""} }
 ]
