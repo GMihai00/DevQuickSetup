@@ -40,8 +40,6 @@ pub fn set_install_value<T: Serialize>(key: &str, value: T) {
     let mut install_vals = INSTALL_VALUES.lock().unwrap();
     
     install_vals[key] = json!(value);
-    
-    let formatted_json = serde_json::to_string_pretty(&install_vals.clone()).unwrap();
 }
 
 pub fn expand_string(input_string: &str) -> String {
