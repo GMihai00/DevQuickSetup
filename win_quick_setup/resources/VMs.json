@@ -8,8 +8,8 @@
     "Enable Hyper-V",
     { "set_reg_val": {
             "reg_path": "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
-            "key_name": "QuickSetup",
-            "value": "CURRENT CMD"
+            "key_name": "QuickSetupResume",
+            "value": "%CMD%"
         }
     },
     { "ps1": { "install_run" : "\"Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All\""} }

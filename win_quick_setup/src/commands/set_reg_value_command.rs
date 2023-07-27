@@ -1,4 +1,4 @@
-use super::common::InstallActionType;
+use super::common::{InstallActionType, expand_string};
 
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
@@ -7,6 +7,7 @@ use std::io;
 
 use winreg::enums::{HKEY_CURRENT_USER, KEY_READ, KEY_WRITE};
 use winreg::RegKey;
+
 #[derive(Deserialize, Serialize)]
 struct UpdateRegistryCommand {
     reg_path: String,
@@ -52,8 +53,9 @@ impl UpdateRegistryCommand {
             }
             _ => {}
         }
-        
-        subkey.set_value(&self.key_name, &self.value)?;
+    
+        // I should expand everything on serialize to add trait for that!!!
+        subkey.set_value(&self.key_name, &expand_string(&self.value).as_str())?;   
         
         return Ok(true);
     }

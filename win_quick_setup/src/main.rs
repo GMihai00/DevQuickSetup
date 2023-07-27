@@ -9,6 +9,7 @@ use std::env;
 
 use commands::common::InstallActionType;
 use rendering::render;
+use commands::common::set_install_value;
 
 fn main() -> Result<(), Box<dyn Error>> {
 
@@ -31,6 +32,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     
         let json_data: Value = serde_json::from_str(&contents).expect("Failed to parse JSON");
     
+        let args: Vec<String> = env::args().collect();
+        let quoted_args: Vec<String> = args.iter().map(|arg| format!("\"{}\"", arg)).collect();
+        
+        set_install_value("CMD", &quoted_args.join(" "));
+        
         render(&json_data, &action)?;
     
         Ok(())

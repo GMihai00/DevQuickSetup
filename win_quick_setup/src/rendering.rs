@@ -9,7 +9,7 @@ use serde_json::{from_value,Value};
 use commands::common::{ActionFn, InstallActionType};
 use commands::exec_command::run_command;
 use commands::winget_command::winget_run;
-use commands::update_reg_value_command::update_registry;
+use commands::set_reg_value_command::update_registry;
 use commands::ps1_command::run_ps1_command;
 use commands::vcpkg_command::vcpkg_command;
 use commands::dir_command::create_dir;
