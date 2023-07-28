@@ -6,6 +6,7 @@ use std::option::Option;
 use serde::Serialize;
 use serde::de::DeserializeOwned;
 use regex::Regex;
+use serde::{Deserializer, Deserialize};
 
 pub enum InstallActionType {
     INSTALL,
@@ -60,4 +61,13 @@ pub fn expand_string(input_string: &str) -> String {
     });
     
     return result.to_string();
+}
+
+pub fn expand_string_deserializer<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let raw_value: String = Deserialize::deserialize(deserializer)?;
+
+    Ok(expand_string(&raw_value.as_str()))
 }

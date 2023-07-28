@@ -1,4 +1,4 @@
-use super::common::InstallActionType;
+use super::common::{InstallActionType, expand_string_deserializer};
 
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
@@ -10,6 +10,8 @@ const REFRESHENV_COMMAND: &str ="Set-ExecutionPolicy Bypass -Scope Process; Impo
 
 #[derive(Deserialize, Serialize)]
 struct VcpkgCommand {
+
+    #[serde(deserialize_with = "expand_string_deserializer")]
     module: String
 }
 

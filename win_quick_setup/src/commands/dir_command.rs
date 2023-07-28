@@ -1,4 +1,4 @@
-use super::common::InstallActionType;
+use super::common::{InstallActionType, expand_string_deserializer};
 
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
@@ -7,7 +7,10 @@ use std::fs;
 
 #[derive(Deserialize, Serialize)]
 struct DirCommand {
+
+    #[serde(deserialize_with = "expand_string_deserializer")]
     path: String,
+    
     #[serde(default = "default_overwrite_option")]
     should_overwrite: bool
 }

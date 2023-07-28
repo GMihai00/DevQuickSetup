@@ -1,4 +1,4 @@
-use super::common::InstallActionType;
+use super::common::{InstallActionType, expand_string_deserializer};
 
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
@@ -7,11 +7,18 @@ use std::error::Error;
 use std::process::Command;
 #[derive(Deserialize, Serialize)]
 struct ExecCommand {
+    #[serde(deserialize_with = "expand_string_deserializer")]
     install_run: String,
+    
+    #[serde(deserialize_with = "expand_string_deserializer")]
     #[serde(default = "default_uninstall_run")]
     uninstall_run: String,
+    
+    #[serde(deserialize_with = "expand_string_deserializer")]
     #[serde(default = "default_update_run")]
     update_run: String,
+    
+    #[serde(deserialize_with = "expand_string_deserializer")]
     #[serde(default = "default_dir")]
     dir: String
 }

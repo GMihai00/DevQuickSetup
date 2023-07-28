@@ -1,4 +1,4 @@
-use super::common::InstallActionType;
+use super::common::{InstallActionType, expand_string_deserializer};
 
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
@@ -11,15 +11,25 @@ const REFRESHENV_COMMAND: &str ="Set-ExecutionPolicy Bypass -Scope Process; Impo
 
 #[derive(Deserialize, Serialize)]
 struct PowershellCommand {
+
+    #[serde(deserialize_with = "expand_string_deserializer")]
     install_run: String,
+    
+    #[serde(deserialize_with = "expand_string_deserializer")]
     #[serde(default = "default_uninstall_run")]
     uninstall_run: String,
+    
+    #[serde(deserialize_with = "expand_string_deserializer")]
     #[serde(default = "default_update_run")]
     update_run: String,
+    
     #[serde(default = "default_refresh_env")]
     refresh_env: bool,
+    
     #[serde(default = "default_preparse")]
     preparse: bool,
+    
+    #[serde(deserialize_with = "expand_string_deserializer")]
     #[serde(default = "default_dir")]
     dir: String
 }

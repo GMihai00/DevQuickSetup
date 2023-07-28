@@ -1,4 +1,4 @@
-use super::common::{InstallActionType, expand_string};
+use super::common::{InstallActionType, expand_string_deserializer};
 
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
@@ -10,8 +10,14 @@ use winreg::RegKey;
 
 #[derive(Deserialize, Serialize)]
 struct UpdateRegistryCommand {
+
+    #[serde(deserialize_with = "expand_string_deserializer")]
     reg_path: String,
+    
+    #[serde(deserialize_with = "expand_string_deserializer")]
     key_name: String,
+    
+    #[serde(deserialize_with = "expand_string_deserializer")]
     value: String,
 }
 
@@ -55,7 +61,7 @@ impl UpdateRegistryCommand {
         }
     
         // I should expand everything on serialize to add trait for that!!!
-        subkey.set_value(&self.key_name, &expand_string(&self.value).as_str())?;   
+        subkey.set_value(&self.key_name, &self.value.as_str())?;   
         
         return Ok(true);
     }
