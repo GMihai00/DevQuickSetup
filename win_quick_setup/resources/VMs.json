@@ -1,4 +1,6 @@
 [  
+    "need to change this kind of command to be sure they do not panic even tough there isn't a reg key to read from !!!!!",
+    "or I can put a can_fail option in there",
     { "get_reg_val": { 
         "reg_path": "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
         "key_name": "QuickSetupResume",
