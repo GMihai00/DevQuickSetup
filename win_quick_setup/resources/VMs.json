@@ -17,7 +17,7 @@
             },
             { "ps1": { "install_run" : "\"Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All\""} }
         ],
-        "except": [
+        "else": [
             "delete run key to add command"
         ]
     }}

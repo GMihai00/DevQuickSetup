@@ -83,6 +83,7 @@ struct ConditionalCommand {
     #[serde(default = "default_run")]
     run: Value,
 
+    #[serde(rename = "else")]
     #[serde(default = "default_except_run")]
     except: Value,
 }
