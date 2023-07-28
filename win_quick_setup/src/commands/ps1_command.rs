@@ -1,4 +1,4 @@
-use super::common::{InstallActionType, expand_string_deserializer};
+use super::common::{expand_string_deserializer, InstallActionType};
 
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
@@ -11,27 +11,26 @@ const REFRESHENV_COMMAND: &str ="Set-ExecutionPolicy Bypass -Scope Process; Impo
 
 #[derive(Deserialize, Serialize)]
 struct PowershellCommand {
-
     #[serde(deserialize_with = "expand_string_deserializer")]
     install_run: String,
-    
+
     #[serde(deserialize_with = "expand_string_deserializer")]
     #[serde(default = "default_uninstall_run")]
     uninstall_run: String,
-    
+
     #[serde(deserialize_with = "expand_string_deserializer")]
     #[serde(default = "default_update_run")]
     update_run: String,
-    
+
     #[serde(default = "default_refresh_env")]
     refresh_env: bool,
-    
+
     #[serde(default = "default_preparse")]
     preparse: bool,
-    
+
     #[serde(deserialize_with = "expand_string_deserializer")]
     #[serde(default = "default_dir")]
-    dir: String
+    dir: String,
 }
 
 fn default_uninstall_run() -> String {
@@ -52,18 +51,16 @@ fn default_preparse() -> bool {
 
 fn default_dir() -> String {
     if let Ok(current_dir) = env::current_dir() {
-        return current_dir.to_string_lossy().to_string()
+        return current_dir.to_string_lossy().to_string();
     } else {
         return String::new();
     }
 }
 
-
 impl PowershellCommand {
-    fn run_command(&self, exec: & String, args: & Vec<String>) -> Result<bool, Box<dyn Error>> {
+    fn run_command(&self, exec: &String, args: &Vec<String>) -> Result<bool, Box<dyn Error>> {
         let exitcode: Option<i32>;
-        if self.refresh_env
-        {
+        if self.refresh_env {
             exitcode = Command::new("powershell")
                 .arg("-Command")
                 .arg(REFRESHENV_COMMAND)
@@ -73,9 +70,7 @@ impl PowershellCommand {
                 .status()
                 .map(|exitcode| exitcode.code())
                 .unwrap_or(Some(-1));
-        }
-        else
-        {
+        } else {
             exitcode = Command::new("powershell")
                 .arg("-Command")
                 .arg(exec)
@@ -88,7 +83,7 @@ impl PowershellCommand {
 
         return Ok(exitcode.is_some_and(|x| x == 0));
     }
-    
+
     pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
         let exec: &String;
         match action {
@@ -103,34 +98,39 @@ impl PowershellCommand {
             }
         }
 
-        println!("Executing command: {} refresh_emv: {}", exec, self.refresh_env);
+        println!(
+            "Executing command: {} refresh_emv: {}",
+            exec, self.refresh_env
+        );
 
-        if exec.len() == 0
-        {
+        if exec.len() == 0 {
             return Ok(true);
         }
-        
-        if self.preparse
-        {
+
+        if self.preparse {
             let (exec, args) = shell_words::split(&exec)
-            .map(|parsed| {
-                parsed.split_first()
-                    .map(|(exec, args)| (exec.to_string(), args.to_vec()))
-            })
-            .unwrap_or_else(|err| {
-                eprintln!("Error parsing command: {:?}", err);
-                panic!("Failed to parse cmdline {}", &exec.as_str());
-            })
-            .expect("Invalid command."); 
-            
+                .map(|parsed| {
+                    parsed
+                        .split_first()
+                        .map(|(exec, args)| (exec.to_string(), args.to_vec()))
+                })
+                .unwrap_or_else(|err| {
+                    eprintln!("Error parsing command: {:?}", err);
+                    panic!("Failed to parse cmdline {}", &exec.as_str());
+                })
+                .expect("Invalid command.");
+
             return self.run_command(&exec, &args);
         }
-    
+
         return self.run_command(&exec, &Vec::new());
     }
 }
 
-pub fn run_ps1_command(json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
+pub fn run_ps1_command(
+    json_data: &Value,
+    action: &InstallActionType,
+) -> Result<bool, Box<dyn Error>> {
     let cmd: PowershellCommand = from_value(json_data.clone())?;
 
     return cmd.execute(action);

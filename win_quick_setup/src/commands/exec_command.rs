@@ -1,4 +1,4 @@
-use super::common::{InstallActionType, expand_string_deserializer};
+use super::common::{expand_string_deserializer, InstallActionType};
 
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
@@ -9,18 +9,18 @@ use std::process::Command;
 struct ExecCommand {
     #[serde(deserialize_with = "expand_string_deserializer")]
     install_run: String,
-    
+
     #[serde(deserialize_with = "expand_string_deserializer")]
     #[serde(default = "default_uninstall_run")]
     uninstall_run: String,
-    
+
     #[serde(deserialize_with = "expand_string_deserializer")]
     #[serde(default = "default_update_run")]
     update_run: String,
-    
+
     #[serde(deserialize_with = "expand_string_deserializer")]
     #[serde(default = "default_dir")]
-    dir: String
+    dir: String,
 }
 
 fn default_uninstall_run() -> String {
@@ -33,12 +33,11 @@ fn default_update_run() -> String {
 
 fn default_dir() -> String {
     if let Ok(current_dir) = env::current_dir() {
-       return current_dir.to_string_lossy().to_string()
+        return current_dir.to_string_lossy().to_string();
     } else {
         return String::new();
     }
 }
-
 
 impl ExecCommand {
     pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
@@ -57,22 +56,22 @@ impl ExecCommand {
 
         println!("Executing command: {}", exec);
 
-        if exec.len() == 0
-        {
+        if exec.len() == 0 {
             return Ok(true);
         }
-        
+
         let (exec, args) = shell_words::split(&exec)
-        .map(|parsed| {
-            parsed.split_first()
-                .map(|(exec, args)| (exec.to_string(), args.to_vec()))
-        })
-        .unwrap_or_else(|err| {
-            eprintln!("Error parsing command: {:?}", err);
-            panic!("Failed to parse cmdline {}", &exec.as_str());
-        })
-        .expect("Invalid command.");
-    
+            .map(|parsed| {
+                parsed
+                    .split_first()
+                    .map(|(exec, args)| (exec.to_string(), args.to_vec()))
+            })
+            .unwrap_or_else(|err| {
+                eprintln!("Error parsing command: {:?}", err);
+                panic!("Failed to parse cmdline {}", &exec.as_str());
+            })
+            .expect("Invalid command.");
+
         let status = Command::new(&exec)
             .args(args)
             .current_dir(&self.dir)

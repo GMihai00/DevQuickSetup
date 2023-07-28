@@ -1,4 +1,4 @@
-use super::common::{InstallActionType, expand_string_deserializer};
+use super::common::{expand_string_deserializer, InstallActionType};
 
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
@@ -7,12 +7,11 @@ use std::fs;
 
 #[derive(Deserialize, Serialize)]
 struct DirCommand {
-
     #[serde(deserialize_with = "expand_string_deserializer")]
     path: String,
-    
+
     #[serde(default = "default_overwrite_option")]
-    should_overwrite: bool
+    should_overwrite: bool,
 }
 
 fn default_overwrite_option() -> bool {
@@ -21,7 +20,6 @@ fn default_overwrite_option() -> bool {
 
 impl DirCommand {
     fn cleanup(&self) -> bool {
-    
         match fs::remove_dir_all(&self.path) {
             Ok(()) => {
                 return true;
@@ -41,36 +39,32 @@ impl DirCommand {
         match action {
             InstallActionType::INSTALL => {
                 if self.should_overwrite {
-            
                     let ret = self.cleanup();
-                    
-                    if  ret == false{
+
+                    if ret == false {
                         println!("Failed to cleanup directory");
                         return Ok(false);
                     }
                 }
-                
+
                 match fs::create_dir_all(&self.path) {
                     Ok(()) => {
                         return Ok(true);
                     }
                     Err(err) => {
                         if err.kind() == std::io::ErrorKind::AlreadyExists {
-                            return  Ok(true);
-                        }
-                        else {
+                            return Ok(true);
+                        } else {
                             eprintln!("Failed to create directories: {}", err);
                             return Ok(false);
                         }
                     }
                 }
-                
             }
             _ => {
                 return Ok(true);
             }
         }
-        
     }
 }
 

@@ -1,23 +1,24 @@
-
 use super::commands;
 
+use serde_json::{from_value, Value};
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
-use serde_json::{from_value,Value};
 
 use commands::common::{ActionFn, InstallActionType};
-use commands::exec_command::run_command;
-use commands::winget_command::winget_run;
-use commands::set_reg_value_command::update_registry;
-use commands::ps1_command::run_ps1_command;
-use commands::vcpkg_command::vcpkg_command;
 use commands::dir_command::create_dir;
+use commands::exec_command::run_command;
+use commands::get_reg_value_command::get_registry_value;
+use commands::ps1_command::run_ps1_command;
+use commands::set_reg_value_command::update_registry;
+use commands::set_var_command::set_install_var;
+use commands::vcpkg_command::vcpkg_command;
+use commands::winget_command::winget_run;
 
 use serde_derive::{Deserialize, Serialize};
 
-use std::collections::HashSet;
 use lazy_static::lazy_static;
+use std::collections::HashSet;
 use std::sync::Mutex;
 
 lazy_static! {
@@ -27,38 +28,39 @@ lazy_static! {
 #[derive(Deserialize, Serialize)]
 
 struct IncludeCommand {
-    config_path: String
+    config_path: String,
 }
 
 impl IncludeCommand {
     pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
-        let mut file = File::open(&self.config_path).expect(&format!("Failed to open file {}", &self.config_path));
+        let mut file = File::open(&self.config_path)
+            .expect(&format!("Failed to open file {}", &self.config_path));
         let mut contents = String::new();
         file.read_to_string(&mut contents)
             .expect("Failed to read file");
-    
+
         let json_data: Value = serde_json::from_str(&contents).expect("Failed to parse JSON");
-    
+
         return render(&json_data, &action);
     }
 }
 
 fn include(json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
     let cmd: IncludeCommand = from_value(json_data.clone())?;
-    
+
     {
         let config_path = cmd.config_path.clone();
         let mut used_paths = USED_CONFIG_PATHS.lock().unwrap();
         if used_paths.contains(&config_path) {
-            return Ok(true)
+            return Ok(true);
         }
         used_paths.insert(config_path);
     }
-    
+
     return cmd.execute(action);
 }
 
-const ACTION_MAP: &[(&str, ActionFn); 8] = &[
+const ACTION_MAP: &[(&str, ActionFn); 10] = &[
     ("exec", run_command),
     ("winget", winget_run),
     ("include", include),
@@ -66,7 +68,9 @@ const ACTION_MAP: &[(&str, ActionFn); 8] = &[
     ("ps1", run_ps1_command),
     ("vcpkg", vcpkg_command),
     ("dir", create_dir),
-    ("set_reg_val", update_registry)
+    ("set_reg_val", update_registry),
+    ("set_var", set_install_var),
+    ("get_reg_var", get_registry_value),
 ];
 
 pub fn render(json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {

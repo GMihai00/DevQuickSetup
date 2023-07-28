@@ -1,4 +1,4 @@
-use super::common::{InstallActionType, expand_string_deserializer};
+use super::common::{expand_string_deserializer, InstallActionType};
 
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
@@ -7,9 +7,8 @@ use std::process::Command;
 
 #[derive(Deserialize, Serialize)]
 struct WingetCommand {
-
     #[serde(deserialize_with = "expand_string_deserializer")]
-    package: String
+    package: String,
 }
 
 impl WingetCommand {
@@ -28,18 +27,15 @@ impl WingetCommand {
         }
         exec.push_str(" --accept-package-agreements ");
         exec.push_str(self.package.as_str());
-        
+
         println!("Executing command: {}", exec);
 
         if cfg!(target_os = "windows") {
-            Command::new("cmd")
-                .args(&["/C", &exec.as_str()])
-                .status()?;
+            Command::new("cmd").args(&["/C", &exec.as_str()]).status()?;
         } else {
             panic!("Winget command not allowed on OS other then windows");
         };
 
-    
         return Ok(true);
     }
 }
