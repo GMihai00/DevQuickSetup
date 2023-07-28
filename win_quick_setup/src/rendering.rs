@@ -1,11 +1,11 @@
 use super::commands;
 
-use serde_json::{from_value, Value};
+use serde_json::{from_value, json, Value};
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
 
-use commands::common::{ActionFn, InstallActionType};
+use commands::common::{expand_string_deserializer, ActionFn, InstallActionType};
 use commands::dir_command::create_dir;
 use commands::exec_command::run_command;
 use commands::get_reg_value_command::get_registry_value;
@@ -21,13 +21,28 @@ use lazy_static::lazy_static;
 use std::collections::HashSet;
 use std::sync::Mutex;
 
+use regex::Regex;
+
 lazy_static! {
     static ref USED_CONFIG_PATHS: Mutex<HashSet<String>> = Mutex::new(HashSet::new());
 }
 
+const ACTION_MAP: &[(&str, ActionFn); 11] = &[
+    ("exec", run_command),
+    ("winget", winget_run),
+    ("include", include),
+    ("reg_update", update_registry),
+    ("ps1", run_ps1_command),
+    ("vcpkg", vcpkg_command),
+    ("dir", create_dir),
+    ("set_reg_val", update_registry),
+    ("set_var", set_install_var),
+    ("get_reg_var", get_registry_value),
+    ("if", check_condition),
+];
 #[derive(Deserialize, Serialize)]
-
 struct IncludeCommand {
+    #[serde(deserialize_with = "expand_string_deserializer")]
     config_path: String,
 }
 
@@ -60,18 +75,97 @@ fn include(json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dy
     return cmd.execute(action);
 }
 
-const ACTION_MAP: &[(&str, ActionFn); 10] = &[
-    ("exec", run_command),
-    ("winget", winget_run),
-    ("include", include),
-    ("reg_update", update_registry),
-    ("ps1", run_ps1_command),
-    ("vcpkg", vcpkg_command),
-    ("dir", create_dir),
-    ("set_reg_val", update_registry),
-    ("set_var", set_install_var),
-    ("get_reg_var", get_registry_value),
-];
+#[derive(Deserialize, Serialize)]
+struct ConditionalCommand {
+    #[serde(deserialize_with = "expand_string_deserializer")]
+    condition: String,
+
+    #[serde(default = "default_run")]
+    run: Value,
+
+    #[serde(default = "default_except_run")]
+    except: Value,
+}
+
+fn default_run() -> Value {
+    return json!([]);
+}
+
+fn default_except_run() -> Value {
+    return json!([]);
+}
+
+impl ConditionalCommand {
+    pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
+        let pattern = r"(.+)\s*(==|>=|<=|!=|<|>)\s*(.+)";
+        let re = Regex::new(pattern).unwrap();
+
+        if let Some(captures) = re.captures(&self.condition) {
+            let value1 = captures.get(1).unwrap().as_str();
+            let operator = captures.get(2).unwrap().as_str();
+            let value2 = captures.get(3).unwrap().as_str();
+
+            match operator {
+                "==" => {
+                    if value1 == value2 {
+                        return render(&self.run, &action);
+                    } else {
+                        return render(&self.except, &action);
+                    }
+                }
+                ">=" => {
+                    if value1 >= value2 {
+                        return render(&self.run, &action);
+                    } else {
+                        return render(&self.except, &action);
+                    }
+                }
+                "<=" => {
+                    if value1 <= value2 {
+                        return render(&self.run, &action);
+                    } else {
+                        return render(&self.except, &action);
+                    }
+                }
+                ">" => {
+                    if value1 > value2 {
+                        return render(&self.run, &action);
+                    } else {
+                        return render(&self.except, &action);
+                    }
+                }
+                "<" => {
+                    if value1 < value2 {
+                        return render(&self.run, &action);
+                    } else {
+                        return render(&self.except, &action);
+                    }
+                }
+                "!=" => {
+                    if value1 != value2 {
+                        return render(&self.run, &action);
+                    } else {
+                        return render(&self.except, &action);
+                    }
+                }
+                _ => {
+                    return Err("Internal error".into());
+                }
+            }
+        } else {
+            return Err("No match found, invalid if statement!".into());
+        }
+    }
+}
+
+pub fn check_condition(
+    json_data: &Value,
+    action: &InstallActionType,
+) -> Result<bool, Box<dyn Error>> {
+    let cmd: ConditionalCommand = from_value(json_data.clone())?;
+
+    return cmd.execute(action);
+}
 
 pub fn render(json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
     if let Value::Array(obj) = json_data {

@@ -6,12 +6,19 @@
         }
     },
     
-    "daca nu avem nimic in RUN_KEY THEN EXECUTE THIS ELSE delete run key",
-    { "set_reg_val": {
-            "reg_path": "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
-            "key_name": "QuickSetupResume",
-            "value": "%CMD%"
-        }
-    },
-    { "ps1": { "install_run" : "\"Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All\""} }
+    { "if": {
+        "condition": "%CMD% != %RUN_KEY%",
+        "run": [
+            { "set_reg_val": {
+                "reg_path": "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+                "key_name": "QuickSetupResume",
+                "value": "%CMD%"
+            }
+            },
+            { "ps1": { "install_run" : "\"Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All\""} }
+        ],
+        "except": [
+            "delete run key to add command"
+        ]
+    }}
 ]

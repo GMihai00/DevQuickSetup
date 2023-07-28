@@ -51,8 +51,14 @@ pub fn expand_string(input_string: &str) -> String {
         match install_val {
             Some(val) => val,
             None => {
-                println!("Failed to find install value {}", captured_value);
-                return captured_value.to_owned().to_string();
+                let install_val: Option<u32> = get_install_value(captured_value);
+                match install_val {
+                    Some(val) => val.to_string(),
+                    None => {
+                        println!("Failed to find install value {}", captured_value);
+                        return captured_value.to_owned().to_string();
+                    }
+                }
             }
         }
     });
