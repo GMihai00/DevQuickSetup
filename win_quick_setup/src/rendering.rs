@@ -6,6 +6,7 @@ use std::fs::File;
 use std::io::Read;
 
 use commands::common::{expand_string_deserializer, ActionFn, InstallActionType};
+use commands::delete_reg_key_command::delete_reg_key;
 use commands::dir_command::create_dir;
 use commands::exec_command::run_command;
 use commands::get_reg_value_command::get_registry_value;
@@ -27,7 +28,7 @@ lazy_static! {
     static ref USED_CONFIG_PATHS: Mutex<HashSet<String>> = Mutex::new(HashSet::new());
 }
 
-const ACTION_MAP: &[(&str, ActionFn); 11] = &[
+const ACTION_MAP: &[(&str, ActionFn); 12] = &[
     ("exec", run_command),
     ("winget", winget_run),
     ("include", include),
@@ -39,6 +40,7 @@ const ACTION_MAP: &[(&str, ActionFn); 11] = &[
     ("set_var", set_install_var),
     ("get_reg_var", get_registry_value),
     ("if", check_condition),
+    ("delete_reg_key", delete_reg_key),
 ];
 #[derive(Deserialize, Serialize)]
 struct IncludeCommand {

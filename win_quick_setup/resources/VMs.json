@@ -4,7 +4,8 @@
     { "get_reg_val": { 
         "reg_path": "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
         "key_name": "QuickSetupResume",
-        "install_key": "RUN_KEY" 
+        "install_key": "RUN_KEY",
+        "can_fail": true
         }
     },
     
@@ -20,7 +21,11 @@
             { "ps1": { "install_run" : "\"Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All\""} }
         ],
         "else": [
-            "delete run key to add command"
+            { "delete_reg_key": { 
+                "reg_path": "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+                "key_name": "QuickSetupResume"
+                }
+            }
         ]
     }}
 ]

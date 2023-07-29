@@ -1,4 +1,5 @@
 pub mod common;
+pub mod delete_reg_key_command;
 pub mod dir_command;
 pub mod exec_command;
 pub mod get_reg_value_command;
