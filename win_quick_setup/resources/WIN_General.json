@@ -2,6 +2,7 @@
     {"include": {"config_path": "VMs.json"}},
     {"include": {"config_path": "General.json"} },
 
+    "to run all of this in paralel, new command paralel_exec, also need to implement a thread pool!",
     { "winget": { "package": "BurntSushi.ripgrep.MSVC"} },
     { "winget": { "package": "Microsoft.WinDbgC"} },
     { "winget": { "package": "Microsoft.Sysinternals.ProcessExplorer"} },
