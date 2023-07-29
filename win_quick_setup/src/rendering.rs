@@ -38,7 +38,7 @@ const ACTION_MAP: &[(&str, ActionFn); 12] = &[
     ("dir", create_dir),
     ("set_reg_val", update_registry),
     ("set_var", set_install_var),
-    ("get_reg_var", get_registry_value),
+    ("get_reg_val", get_registry_value),
     ("if", check_condition),
     ("delete_reg_key", delete_reg_key),
 ];
@@ -100,7 +100,7 @@ fn default_except_run() -> Value {
 
 impl ConditionalCommand {
     pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
-        let pattern = r"(.+)\s*(==|>=|<=|!=|<|>)\s*(.+)";
+        let pattern = r"(.+)\s*(==|>=|<=|!=|<|>|contains|!contains)\s*(.+)";
         let re = Regex::new(pattern).unwrap();
 
         if let Some(captures) = re.captures(&self.condition) {
@@ -151,6 +151,20 @@ impl ConditionalCommand {
                         return render(&self.except, &action);
                     }
                 }
+                "contains" => {
+                    if let Some(_) =  value1.find(value2) {
+                        return render(&self.run, &action);
+                    } else {
+                        return render(&self.except, &action);
+                    }
+                },
+                "!contains" => {
+                    if let Some(_) =  value1.find(value2) {
+                        return render(&self.except, &action);
+                    } else {
+                        return render(&self.run, &action);
+                    }
+                },
                 _ => {
                     return Err("Internal error".into());
                 }

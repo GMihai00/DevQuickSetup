@@ -10,7 +10,7 @@
     },
     
     { "if": {
-        "condition": "%CMD% != %RUN_KEY%",
+        "condition": "%RUN_KEY% != %CMD%",
         "run": [
             { "set_reg_val": {
                 "reg_path": "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
@@ -19,13 +19,13 @@
             }
             },
             { "ps1": { "install_run" : "\"Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All\""} }
-        ],
-        "else": [
-            { "delete_reg_key": { 
-                "reg_path": "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
-                "key_name": "QuickSetupResume"
-                }
-            }
         ]
-    }}
+    }},
+
+    { "delete_reg_key": { 
+        "reg_path": "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+        "key_name": "QuickSetupResume"
+        }
+    }
+    
 ]
