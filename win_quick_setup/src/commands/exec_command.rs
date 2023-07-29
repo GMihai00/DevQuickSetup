@@ -1,10 +1,12 @@
-use super::common::{expand_string_deserializer, InstallActionType};
+use super::common::{expand_string_deserializer, InstallActionType, ActionFn};
 
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
 use std::env;
 use std::error::Error;
 use std::process::Command;
+
+use async_trait::async_trait;
 #[derive(Deserialize, Serialize)]
 struct ExecCommand {
     #[serde(deserialize_with = "expand_string_deserializer")]
@@ -40,7 +42,7 @@ fn default_dir() -> String {
 }
 
 impl ExecCommand {
-    pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
+    pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>> {
         let exec: &String;
         match action {
             InstallActionType::INSTALL => {
@@ -84,8 +86,16 @@ impl ExecCommand {
     }
 }
 
-pub fn run_command(json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
-    let cmd: ExecCommand = from_value(json_data.clone())?;
+pub struct ExecCommandExecutor{
+    
+}
 
-    return cmd.execute(action);
+#[async_trait]
+impl ActionFn for ExecCommandExecutor {
+    async fn execute_command(&self, json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>>
+    {
+        let cmd: ExecCommand = from_value(json_data.clone())?;
+
+        return cmd.execute(action);
+    }
 }

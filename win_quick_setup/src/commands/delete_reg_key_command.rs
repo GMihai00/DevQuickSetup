@@ -1,4 +1,4 @@
-use super::common::{expand_string_deserializer, InstallActionType};
+use super::common::{expand_string_deserializer, InstallActionType, ActionFn};
 
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
@@ -18,7 +18,7 @@ struct DeleteRegistryValueCommand {
 }
 
 impl DeleteRegistryValueCommand {
-    pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
+    pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>> {
         match action {
             InstallActionType::INSTALL => {}
             _ => return Ok(true),
@@ -50,11 +50,18 @@ impl DeleteRegistryValueCommand {
     }
 }
 
-pub fn delete_reg_key(
-    json_data: &Value,
-    action: &InstallActionType,
-) -> Result<bool, Box<dyn Error>> {
-    let cmd: DeleteRegistryValueCommand = from_value(json_data.clone())?;
+pub struct DeleteRegistryValueCommandExecutor{
+}
 
-    return cmd.execute(action);
+use async_trait::async_trait;
+
+#[async_trait]
+impl ActionFn for DeleteRegistryValueCommandExecutor
+{
+    async fn execute_command(&self, json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>>
+    {
+        let cmd: DeleteRegistryValueCommand = from_value(json_data.clone())?;
+
+        return cmd.execute(action);
+    }
 }

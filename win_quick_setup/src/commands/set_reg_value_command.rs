@@ -1,4 +1,4 @@
-use super::common::{expand_string_deserializer, InstallActionType};
+use super::common::{expand_string_deserializer, InstallActionType, ActionFn};
 
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
@@ -21,7 +21,7 @@ struct UpdateRegistryCommand {
 }
 
 impl UpdateRegistryCommand {
-    pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
+    pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>> {
         match action {
             InstallActionType::INSTALL => {}
             _ => return Ok(true),
@@ -49,13 +49,17 @@ impl UpdateRegistryCommand {
     }
 }
 
-// AR TREBUI SA SCHIMB FUNCTIA ASTA SA FIE OVERALL ALEASA, SA POT SA-I SPECIFIC DOAR TIPUL DE DATE LA CMD CA IN REST SUNT CAM
-// THE SAME THING SA VAD DACA POT ALEGE DINAMIC TIPURI DE DATE LA RUNTIME
-pub fn update_registry(
-    json_data: &Value,
-    action: &InstallActionType,
-) -> Result<bool, Box<dyn Error>> {
-    let cmd: UpdateRegistryCommand = from_value(json_data.clone())?;
+pub struct UpdateRegistryCommandExecutor{
+}
 
-    return cmd.execute(action);
+use async_trait::async_trait;
+
+#[async_trait]
+impl ActionFn for UpdateRegistryCommandExecutor{
+    async fn execute_command(&self, json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>>
+    {
+        let cmd: UpdateRegistryCommand = from_value(json_data.clone())?;
+
+        return cmd.execute(action);
+    }
 }

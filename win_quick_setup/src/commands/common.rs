@@ -8,13 +8,19 @@ use std::error::Error;
 use std::option::Option;
 use std::sync::Mutex;
 
+#[derive(Clone)]
 pub enum InstallActionType {
     INSTALL,
     UNINSTALL,
     UPDATE,
 }
 
-pub type ActionFn = fn(&Value, &InstallActionType) -> Result<bool, Box<dyn Error>>;
+use async_trait::async_trait;
+
+#[async_trait]
+pub trait ActionFn {
+    async fn execute_command(&self, json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error + Send + Sync>>;
+}
 
 lazy_static! {
     static ref INSTALL_VALUES: Mutex<serde_json::Value> = Mutex::new(json!({}));

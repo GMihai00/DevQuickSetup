@@ -1,4 +1,4 @@
-use super::common::{expand_string_deserializer,  InstallActionType};
+use super::common::{expand_string_deserializer,  InstallActionType, ActionFn};
 
 use std::error::Error;
 
@@ -31,7 +31,7 @@ fn default_except_run() -> Value {
 }
 
 impl ConditionalCommand {
-    pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
+    pub async fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>> {
         let pattern = r"(.+)\s*(==|>=|<=|!=|<|>|contains|!contains)\s*(.+)";
         let re = Regex::new(pattern).unwrap();
 
@@ -46,58 +46,58 @@ impl ConditionalCommand {
             match operator {
                 "==" => {
                     if value1 == value2 {
-                        return render(&self.run, &action);
+                        return render(&self.run, &action).await;
                     } else {
-                        return render(&self.except, &action);
+                        return render(&self.except, &action).await;
                     }
                 }
                 ">=" => {
                     if value1 >= value2 {
-                        return render(&self.run, &action);
+                        return render(&self.run, &action).await;
                     } else {
-                        return render(&self.except, &action);
+                        return render(&self.except, &action).await;
                     }
                 }
                 "<=" => {
                     if value1 <= value2 {
-                        return render(&self.run, &action);
+                        return render(&self.run, &action).await;
                     } else {
-                        return render(&self.except, &action);
+                        return render(&self.except, &action).await;
                     }
                 }
                 ">" => {
                     if value1 > value2 {
-                        return render(&self.run, &action);
+                        return render(&self.run, &action).await;
                     } else {
-                        return render(&self.except, &action);
+                        return render(&self.except, &action).await;
                     }
                 }
                 "<" => {
                     if value1 < value2 {
-                        return render(&self.run, &action);
+                        return render(&self.run, &action).await;
                     } else {
-                        return render(&self.except, &action);
+                        return render(&self.except, &action).await;
                     }
                 }
                 "!=" => {
                     if value1 != value2 {
-                        return render(&self.run, &action);
+                        return render(&self.run, &action).await;
                     } else {
-                        return render(&self.except, &action);
+                        return render(&self.except, &action).await;
                     }
                 }
                 "contains" => {
                     if let Some(_) = value1.find(value2) {
-                        return render(&self.run, &action);
+                        return render(&self.run, &action).await;
                     } else {
-                        return render(&self.except, &action);
+                        return render(&self.except, &action).await;
                     }
                 }
                 "!contains" => {
                     if let Some(_) = value1.find(value2) {
-                        return render(&self.except, &action);
+                        return render(&self.except, &action).await;
                     } else {
-                        return render(&self.run, &action);
+                        return render(&self.run, &action).await;
                     }
                 }
                 _ => {
@@ -110,11 +110,16 @@ impl ConditionalCommand {
     }
 }
 
-pub fn check_condition(
-    json_data: &Value,
-    action: &InstallActionType,
-) -> Result<bool, Box<dyn Error>> {
-    let cmd: ConditionalCommand = from_value(json_data.clone())?;
+pub struct ConditionalCommandExecutor{
+}
 
-    return cmd.execute(action);
+use async_trait::async_trait;
+
+#[async_trait]
+impl ActionFn for ConditionalCommandExecutor {
+    async fn execute_command(&self, json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>>{
+        let cmd: ConditionalCommand = from_value(json_data.clone())?;
+
+        return cmd.execute(action).await;
+    }
 }

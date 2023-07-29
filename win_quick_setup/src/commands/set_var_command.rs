@@ -1,4 +1,4 @@
-use super::common::{expand_string_deserializer, set_install_value, InstallActionType};
+use super::common::{expand_string_deserializer, set_install_value, InstallActionType, ActionFn};
 
 use serde::Serialize;
 use serde_derive::{Deserialize, Serialize};
@@ -11,7 +11,7 @@ struct SetVarCommand<T: Clone + Serialize> {
 }
 
 impl<T: Clone + Serialize> SetVarCommand<T> {
-    pub fn execute(&self, _action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
+    pub fn execute(&self, _action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>> {
         set_install_value(&self.key.as_str(), self.value.clone());
 
         return Ok(true);
@@ -26,40 +26,46 @@ struct SetStringVarCommand {
 }
 
 impl SetStringVarCommand {
-    pub fn execute(&self, _action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
+    pub fn execute(&self, _action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>> {
         set_install_value(&self.key.as_str(), &self.value);
 
         return Ok(true);
     }
 }
 
-pub fn set_install_var(
-    json_data: &Value,
-    action: &InstallActionType,
-) -> Result<bool, Box<dyn Error>> {
-    match json_data.get("value") {
-        Some(value) => match value {
-            Value::Bool(_) => {
-                let cmd: SetVarCommand<bool> = from_value(json_data.clone())?;
+pub struct SetVarCommandExecutor{
+}
 
-                return cmd.execute(action);
-            }
-            Value::Number(_) => {
-                let cmd: SetVarCommand<u32> = from_value(json_data.clone())?;
+use async_trait::async_trait;
 
-                return cmd.execute(action);
-            }
-            Value::String(_) => {
-                let cmd: SetStringVarCommand = from_value(json_data.clone())?;
-
-                return cmd.execute(action);
-            }
+#[async_trait]
+impl ActionFn for SetVarCommandExecutor{
+    async fn execute_command(&self, json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>>
+    {
+        match json_data.get("value") {
+            Some(value) => match value {
+                Value::Bool(_) => {
+                    let cmd: SetVarCommand<bool> = from_value(json_data.clone())?;
+    
+                    return cmd.execute(action);
+                }
+                Value::Number(_) => {
+                    let cmd: SetVarCommand<u32> = from_value(json_data.clone())?;
+    
+                    return cmd.execute(action);
+                }
+                Value::String(_) => {
+                    let cmd: SetStringVarCommand = from_value(json_data.clone())?;
+    
+                    return cmd.execute(action);
+                }
+                _ => {
+                    return Err("Unsupported data type".into());
+                }
+            },
             _ => {
-                return Err("Unsupported data type".into());
+                return Err("Key 'value' not found in JSON data".into());
             }
-        },
-        _ => {
-            return Err("Key 'value' not found in JSON data".into());
         }
     }
 }

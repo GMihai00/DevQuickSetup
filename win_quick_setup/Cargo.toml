@@ -13,3 +13,5 @@ winreg = "0.7.0"
 shell-words = "0.1"
 lazy_static = "1.4"
 regex = "1.5"
+tokio = {version = "0.2.*", features = ["full"] }
+async-trait = "0.1"

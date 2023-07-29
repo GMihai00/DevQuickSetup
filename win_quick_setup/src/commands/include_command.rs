@@ -13,7 +13,7 @@ use std::sync::Mutex;
 use super::super::rendering::render;
 
 use super::common::{
-    expand_string_deserializer, get_install_value, InstallActionType,
+    expand_string_deserializer, get_install_value, InstallActionType, ActionFn
 };
 
 lazy_static! {
@@ -27,7 +27,7 @@ struct IncludeCommand {
 }
 
 impl IncludeCommand {
-    pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
+    pub async fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>> {
         let path = self.config_path.clone();
         let path = Path::new(path.as_str());
 
@@ -54,21 +54,29 @@ impl IncludeCommand {
 
         let json_data: Value = serde_json::from_str(&contents).expect("Failed to parse JSON");
 
-        return render(&json_data, &action);
+        return render(&json_data, &action).await;
     }
 }
 
-pub fn include(json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
-    let cmd: IncludeCommand = from_value(json_data.clone())?;
+pub struct IncludeCommandExecutor{
+}
 
+use async_trait::async_trait;
+
+#[async_trait]
+impl ActionFn for IncludeCommandExecutor{
+    async fn execute_command(&self, json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>>
     {
-        let config_path = cmd.config_path.clone();
-        let mut used_paths = INCLUDED_CONFIGS.lock().unwrap();
-        if used_paths.contains(&config_path) {
-            return Ok(true);
+        let cmd: IncludeCommand = from_value(json_data.clone())?;
+        {
+            let config_path = cmd.config_path.clone();
+            let mut used_paths = INCLUDED_CONFIGS.lock().unwrap();
+            if used_paths.contains(&config_path) {
+                return Ok(true);
+            }
+            used_paths.insert(config_path);
         }
-        used_paths.insert(config_path);
+    
+        return cmd.execute(action).await;
     }
-
-    return cmd.execute(action);
 }

@@ -1,4 +1,4 @@
-use super::common::{expand_string_deserializer, InstallActionType};
+use super::common::{expand_string_deserializer, InstallActionType, ActionFn};
 
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
@@ -35,7 +35,7 @@ impl DirCommand {
         }
     }
 
-    pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
+    pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>> {
         match action {
             InstallActionType::INSTALL => {
                 if self.should_overwrite {
@@ -68,8 +68,18 @@ impl DirCommand {
     }
 }
 
-pub fn create_dir(json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
-    let cmd: DirCommand = from_value(json_data.clone())?;
-
-    return cmd.execute(action);
+pub struct DirCommandExecutor{
 }
+
+use async_trait::async_trait;
+
+#[async_trait]
+impl ActionFn for DirCommandExecutor
+{
+    async fn execute_command(&self, json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>>{
+        let cmd: DirCommand = from_value(json_data.clone())?;
+
+        return cmd.execute(action);
+    }
+}
+    

@@ -1,5 +1,6 @@
 mod commands;
 mod rendering;
+mod executor_factory;
 
 use serde_json::Value;
 use std::env;
@@ -12,6 +13,7 @@ use std::path::Path;
 use commands::common::set_install_value;
 use commands::common::InstallActionType;
 use rendering::render;
+
 
 fn save_cmd() {
     let mut args: Vec<String> = env::args().collect();
@@ -32,7 +34,8 @@ fn save_cmd() {
     set_install_value("CMD", &quoted_args.join(" "));
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn Error  + Send + Sync>> {
     let args: Vec<String> = env::args().collect();
 
     if args.len() > 2 {
@@ -53,7 +56,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         save_cmd();
 
-        render(&json_data, &action)?;
+        render(&json_data, &action).await?;
 
         Ok(())
     } else {

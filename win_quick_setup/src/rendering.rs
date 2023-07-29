@@ -1,37 +1,14 @@
 use super::commands;
 
+use commands::common::InstallActionType;
+
 use std::error::Error;
 use serde_json::Value;
 
-use commands::common::{ ActionFn, InstallActionType};
-use commands::delete_reg_key_command::delete_reg_key;
-use commands::dir_command::create_dir;
-use commands::exec_command::run_command;
-use commands::get_reg_value_command::get_registry_value;
-use commands::ps1_command::run_ps1_command;
-use commands::set_reg_value_command::update_registry;
-use commands::set_var_command::set_install_var;
-use commands::vcpkg_command::vcpkg_command;
-use commands::winget_command::winget_run;
-use commands::include_command::include;
-use commands::conditional_command::check_condition;
+use super::executor_factory::ExecutorFactory;
 
-const ACTION_MAP: &[(&str, ActionFn); 12] = &[
-    ("exec", run_command),
-    ("winget", winget_run),
-    ("include", include),
-    ("reg_update", update_registry),
-    ("ps1", run_ps1_command),
-    ("vcpkg", vcpkg_command),
-    ("dir", create_dir),
-    ("set_reg_val", update_registry),
-    ("set_var", set_install_var),
-    ("get_reg_val", get_registry_value),
-    ("if", check_condition),
-    ("delete_reg_key", delete_reg_key),
-];
+pub async fn render(json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>> {
 
-pub fn render(json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
     if let Value::Array(obj) = json_data {
         for value in obj.iter() {
             if let Value::Object(object) = value {
@@ -45,24 +22,21 @@ pub fn render(json_data: &Value, action: &InstallActionType) -> Result<bool, Box
                 }
 
                 if let Some(first_key) = object.keys().next() {
-                    if let Some(&function) = ACTION_MAP
-                        .iter()
-                        .find(|&(key, _)| key == first_key)
-                        .map(|(_, function)| function)
-                    {
-                        let ok = (function)(&object[first_key], action)?;
-                        if !ok {
-                            println!("One of the instructions failed, halting execution");
-                            return Ok(false);
+                    let executor = ExecutorFactory::build(first_key.as_str());
+                    let future = executor.execute_command(&object[first_key], action);
+
+                    match future.await {
+                        Ok(ret) => { 
+                            if !ret{
+                                println!("Command failed");
+                                return Ok(false);
+                            } 
+                        },
+                        Err(err) => {
+                            panic!("Failed to run command, err: {}", err);
                         }
-                    } else {
-                        let json_string = serde_json::to_string(&object)
-                            .expect("Failed to convert JSON to string");
-                        panic!(
-                            "Failed to found matching instruction for json: {}",
-                            json_string
-                        );
                     }
+                    
                 } else {
                     let json_string =
                         serde_json::to_string(&object).expect("Failed to convert JSON to string");
@@ -73,6 +47,9 @@ pub fn render(json_data: &Value, action: &InstallActionType) -> Result<bool, Box
                 }
             }
         }
+    }
+    else {
+        panic!("Invalid syntax, comands are supposed to be contained into an array of objects");
     }
 
     return Ok(true);
