@@ -4,8 +4,11 @@ use serde_json::{from_value, json, Value};
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
+use std::path::Path;
 
-use commands::common::{expand_string_deserializer, ActionFn, InstallActionType};
+use commands::common::{
+    expand_string_deserializer, get_install_value, ActionFn, InstallActionType,
+};
 use commands::delete_reg_key_command::delete_reg_key;
 use commands::dir_command::create_dir;
 use commands::exec_command::run_command;
@@ -50,8 +53,26 @@ struct IncludeCommand {
 
 impl IncludeCommand {
     pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error>> {
-        let mut file = File::open(&self.config_path)
-            .expect(&format!("Failed to open file {}", &self.config_path));
+        let path = self.config_path.clone();
+        let path = Path::new(path.as_str());
+
+        let mut config_path = self.config_path.clone();
+
+        if !(path.is_file() && path.is_absolute()) {
+            let conf_dir: Option<String> = get_install_value("CONF_DIR");
+
+            match conf_dir {
+                Some(conf_dir) => {
+                    config_path = conf_dir.to_string() + self.config_path.as_str();
+                }
+                None => {
+                    panic!("Failed to find config dir")
+                }
+            }
+        }
+
+        let mut file =
+            File::open(&config_path).expect(&format!("Failed to open file {}", config_path));
         let mut contents = String::new();
         file.read_to_string(&mut contents)
             .expect("Failed to read file");

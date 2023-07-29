@@ -7,6 +7,7 @@ use std::error::Error;
 use std::fs;
 use std::fs::File;
 use std::io::Read;
+use std::path::Path;
 
 use commands::common::set_install_value;
 use commands::common::InstallActionType;
@@ -17,6 +18,14 @@ fn save_cmd() {
     let absolute_path =
         fs::canonicalize(args[2].clone().as_str()).expect("Failed to get absolute path");
     args[2] = absolute_path.to_string_lossy().to_string();
+
+    let conf_file = args[2].clone();
+    let conf_dir = Path::new(conf_file.as_str())
+        .parent()
+        .unwrap_or_else(|| panic!("Not a config file, found a directory"));
+
+    let conf_dir = conf_dir.to_str().unwrap().to_owned() + "\\";
+    set_install_value("CONF_DIR", conf_dir);
 
     let quoted_args: Vec<String> = args.iter().map(|arg| format!("\"{}\"", arg)).collect();
 
