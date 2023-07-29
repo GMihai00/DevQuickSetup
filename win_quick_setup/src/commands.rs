@@ -8,3 +8,5 @@ pub mod set_reg_value_command;
 pub mod set_var_command;
 pub mod vcpkg_command;
 pub mod winget_command;
+pub mod include_command;
+pub mod conditional_command;
