@@ -108,6 +108,9 @@ impl ConditionalCommand {
             let operator = captures.get(2).unwrap().as_str();
             let value2 = captures.get(3).unwrap().as_str();
 
+            let value1 = value1.trim_start().trim_end();
+            let value2 = value2.trim_start().trim_end();
+
             match operator {
                 "==" => {
                     if value1 == value2 {
@@ -152,19 +155,19 @@ impl ConditionalCommand {
                     }
                 }
                 "contains" => {
-                    if let Some(_) =  value1.find(value2) {
+                    if let Some(_) = value1.find(value2) {
                         return render(&self.run, &action);
                     } else {
                         return render(&self.except, &action);
                     }
-                },
+                }
                 "!contains" => {
-                    if let Some(_) =  value1.find(value2) {
+                    if let Some(_) = value1.find(value2) {
                         return render(&self.except, &action);
                     } else {
                         return render(&self.run, &action);
                     }
-                },
+                }
                 _ => {
                     return Err("Internal error".into());
                 }
