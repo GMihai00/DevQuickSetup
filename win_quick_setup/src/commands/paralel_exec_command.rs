@@ -6,6 +6,7 @@ use serde_json::{from_value, json, Value};
 use serde_derive::{Deserialize, Serialize};
 
 use tokio::task;
+use futures::future;
 
 use super::super::rendering::render;
 
@@ -39,15 +40,44 @@ impl ParalelExecCommand {
                 }
             }
             
-            // here need to check if all succeded
-            for task in tasks {
-                match task.await.unwrap(){
-                    Ok(ret) => { if !ret{
-                        println!("One of the paralel ran commands failed");
-                        return Ok(false)
-                    }}
-                    Err(err) => { return Err(err); }
+            let (item_resolved, idx, remaining_futures) = future::select_all(tasks).await;
+            
+            match item_resolved {
+                Ok(value) => {
+                    match value {
+                        Ok(ret) => { if !ret{
+                            println!("One of the paralel ran commands failed");
+                            return Ok(false)
+                        }}
+                        Err(err) => { return Err(err); }
+                    }
                 }
+                Err(err) => {
+                    panic!("Task at index {} failed with error: {:?}", idx, err);
+                }
+            }
+            
+            let mut futures = remaining_futures;
+
+            while !futures.is_empty() {
+                let (item_resolved, idx, remaining_futures) = future::select_all(futures).await;
+        
+                match item_resolved {
+                    Ok(value) => {
+                        match value {
+                            Ok(ret) => { if !ret{
+                                println!("One of the paralel ran commands failed");
+                                return Ok(false)
+                            }}
+                            Err(err) => { return Err(err); }
+                        }
+                    }
+                    Err(err) => {
+                        panic!("Task at index {} failed with error: {:?}", idx, err);
+                    }
+                }
+        
+                futures = remaining_futures;
             }
         }
         else {
