@@ -1,5 +1,5 @@
 use super::common::{
-    expand_string, expand_string_deserializer, set_install_value, InstallActionType, ActionFn
+    expand_string, expand_string_deserializer, set_install_value, ActionFn, InstallActionType,
 };
 
 use serde_derive::{Deserialize, Serialize};
@@ -29,7 +29,10 @@ fn default_can_fail_option() -> bool {
 }
 
 impl GetRegistryValueCommand {
-    pub fn execute(&self, _action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>> {
+    pub fn execute(
+        &self,
+        _action: &InstallActionType,
+    ) -> Result<bool, Box<dyn Error + Send + Sync>> {
         let hklm = RegKey::predef(HKEY_CURRENT_USER);
 
         match hklm.open_subkey_with_flags(&self.reg_path.as_str(), KEY_READ) {
@@ -66,15 +69,17 @@ impl GetRegistryValueCommand {
     }
 }
 
-pub struct GetRegistryValueCommandExecutor{
-}
+pub struct GetRegistryValueCommandExecutor {}
 
 use async_trait::async_trait;
 
 #[async_trait]
-impl ActionFn for GetRegistryValueCommandExecutor
-{
-    async fn execute_command(&self, json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>>{
+impl ActionFn for GetRegistryValueCommandExecutor {
+    async fn execute_command(
+        &self,
+        json_data: &Value,
+        action: &InstallActionType,
+    ) -> Result<bool, Box<dyn Error + Send + Sync>> {
         let cmd: GetRegistryValueCommand = from_value(json_data.clone())?;
 
         return cmd.execute(action);

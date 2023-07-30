@@ -1,4 +1,4 @@
-use super::common::{expand_string_deserializer, InstallActionType, ActionFn};
+use super::common::{expand_string_deserializer, ActionFn, InstallActionType};
 
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
@@ -15,7 +15,11 @@ struct VcpkgCommand {
 }
 
 impl VcpkgCommand {
-    fn run_command(&self, exec: &String, args: &Vec<String>) -> Result<bool, Box<dyn Error  + Send + Sync>> {
+    fn run_command(
+        &self,
+        exec: &String,
+        args: &Vec<String>,
+    ) -> Result<bool, Box<dyn Error + Send + Sync>> {
         let exitcode: Option<i32>;
 
         exitcode = Command::new("powershell")
@@ -30,7 +34,10 @@ impl VcpkgCommand {
         return Ok(exitcode.is_some_and(|x| x == 0));
     }
 
-    pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>> {
+    pub fn execute(
+        &self,
+        action: &InstallActionType,
+    ) -> Result<bool, Box<dyn Error + Send + Sync>> {
         let mut exec: String = String::new();
         match action {
             InstallActionType::INSTALL => {
@@ -55,15 +62,17 @@ impl VcpkgCommand {
     }
 }
 
-pub struct VcpkgCommandExecutor{
-}
+pub struct VcpkgCommandExecutor {}
 
 use async_trait::async_trait;
 
 #[async_trait]
-impl ActionFn for VcpkgCommandExecutor{
-    async fn execute_command(&self, json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>>
-    {
+impl ActionFn for VcpkgCommandExecutor {
+    async fn execute_command(
+        &self,
+        json_data: &Value,
+        action: &InstallActionType,
+    ) -> Result<bool, Box<dyn Error + Send + Sync>> {
         let cmd: VcpkgCommand = from_value(json_data.clone())?;
 
         return cmd.execute(action);

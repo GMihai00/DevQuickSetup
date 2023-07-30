@@ -1,10 +1,9 @@
-
+use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
 use std::error::Error;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
-use serde_derive::{Deserialize, Serialize};
 
 use lazy_static::lazy_static;
 use std::collections::HashSet;
@@ -12,9 +11,7 @@ use std::sync::Mutex;
 
 use super::super::rendering::render;
 
-use super::common::{
-    expand_string_deserializer, get_install_value, InstallActionType, ActionFn
-};
+use super::common::{expand_string_deserializer, get_install_value, ActionFn, InstallActionType};
 
 lazy_static! {
     static ref INCLUDED_CONFIGS: Mutex<HashSet<String>> = Mutex::new(HashSet::new());
@@ -27,7 +24,10 @@ struct IncludeCommand {
 }
 
 impl IncludeCommand {
-    pub async fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>> {
+    pub async fn execute(
+        &self,
+        action: &InstallActionType,
+    ) -> Result<bool, Box<dyn Error + Send + Sync>> {
         let path = self.config_path.clone();
         let path = Path::new(path.as_str());
 
@@ -58,15 +58,17 @@ impl IncludeCommand {
     }
 }
 
-pub struct IncludeCommandExecutor{
-}
+pub struct IncludeCommandExecutor {}
 
 use async_trait::async_trait;
 
 #[async_trait]
-impl ActionFn for IncludeCommandExecutor{
-    async fn execute_command(&self, json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>>
-    {
+impl ActionFn for IncludeCommandExecutor {
+    async fn execute_command(
+        &self,
+        json_data: &Value,
+        action: &InstallActionType,
+    ) -> Result<bool, Box<dyn Error + Send + Sync>> {
         let cmd: IncludeCommand = from_value(json_data.clone())?;
         {
             let config_path = cmd.config_path.clone();
@@ -76,7 +78,7 @@ impl ActionFn for IncludeCommandExecutor{
             }
             used_paths.insert(config_path);
         }
-    
+
         return cmd.execute(action).await;
     }
 }

@@ -1,4 +1,4 @@
-use super::common::{expand_string_deserializer, InstallActionType, ActionFn};
+use super::common::{expand_string_deserializer, ActionFn, InstallActionType};
 
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
@@ -58,7 +58,11 @@ fn default_dir() -> String {
 }
 
 impl PowershellCommand {
-    fn run_command(&self, exec: &String, args: &Vec<String>) -> Result<bool, Box<dyn Error  + Send + Sync>> {
+    fn run_command(
+        &self,
+        exec: &String,
+        args: &Vec<String>,
+    ) -> Result<bool, Box<dyn Error + Send + Sync>> {
         let exitcode: Option<i32>;
         if self.refresh_env {
             exitcode = Command::new("powershell")
@@ -84,7 +88,10 @@ impl PowershellCommand {
         return Ok(exitcode.is_some_and(|x| x == 0));
     }
 
-    pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>> {
+    pub fn execute(
+        &self,
+        action: &InstallActionType,
+    ) -> Result<bool, Box<dyn Error + Send + Sync>> {
         let exec: &String;
         match action {
             InstallActionType::INSTALL => {
@@ -126,15 +133,17 @@ impl PowershellCommand {
         return self.run_command(&exec, &Vec::new());
     }
 }
-pub struct PowershellCommandExecutor{
-}
+pub struct PowershellCommandExecutor {}
 
 use async_trait::async_trait;
 
 #[async_trait]
-impl ActionFn for PowershellCommandExecutor{
-    async fn execute_command(&self, json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>>
-    {
+impl ActionFn for PowershellCommandExecutor {
+    async fn execute_command(
+        &self,
+        json_data: &Value,
+        action: &InstallActionType,
+    ) -> Result<bool, Box<dyn Error + Send + Sync>> {
         let cmd: PowershellCommand = from_value(json_data.clone())?;
 
         return cmd.execute(action);

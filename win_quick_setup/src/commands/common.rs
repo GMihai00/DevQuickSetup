@@ -19,7 +19,11 @@ use async_trait::async_trait;
 
 #[async_trait]
 pub trait ActionFn {
-    async fn execute_command(&self, json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error + Send + Sync>>;
+    async fn execute_command(
+        &self,
+        json_data: &Value,
+        action: &InstallActionType,
+    ) -> Result<bool, Box<dyn Error + Send + Sync>>;
 }
 
 lazy_static! {

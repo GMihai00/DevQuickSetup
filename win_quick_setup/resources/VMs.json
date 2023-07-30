@@ -14,7 +14,7 @@
                 "reg_path": "Software\\Microsoft\\Windows\\CurrentVersion\\Run",
                 "key_name": "QuickSetupResume",
                 "value": "%CMD%"
-            }
+                }
             },
             { "ps1": { "install_run" : "\"Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All\""} }
         ]

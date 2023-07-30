@@ -1,4 +1,4 @@
-use super::common::{expand_string_deserializer, InstallActionType, ActionFn};
+use super::common::{expand_string_deserializer, ActionFn, InstallActionType};
 
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
@@ -42,7 +42,10 @@ fn default_dir() -> String {
 }
 
 impl ExecCommand {
-    pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>> {
+    pub fn execute(
+        &self,
+        action: &InstallActionType,
+    ) -> Result<bool, Box<dyn Error + Send + Sync>> {
         let exec: &String;
         match action {
             InstallActionType::INSTALL => {
@@ -86,14 +89,15 @@ impl ExecCommand {
     }
 }
 
-pub struct ExecCommandExecutor{
-    
-}
+pub struct ExecCommandExecutor {}
 
 #[async_trait]
 impl ActionFn for ExecCommandExecutor {
-    async fn execute_command(&self, json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>>
-    {
+    async fn execute_command(
+        &self,
+        json_data: &Value,
+        action: &InstallActionType,
+    ) -> Result<bool, Box<dyn Error + Send + Sync>> {
         let cmd: ExecCommand = from_value(json_data.clone())?;
 
         return cmd.execute(action);

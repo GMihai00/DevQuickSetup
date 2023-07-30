@@ -1,9 +1,9 @@
-use super::common::{expand_string_deserializer,  InstallActionType, ActionFn};
+use super::common::{expand_string_deserializer, ActionFn, InstallActionType};
 
 use std::error::Error;
 
-use serde_json::{from_value, json, Value};
 use serde_derive::{Deserialize, Serialize};
+use serde_json::{from_value, json, Value};
 
 use regex::Regex;
 
@@ -31,7 +31,10 @@ fn default_except_run() -> Value {
 }
 
 impl ConditionalCommand {
-    pub async fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>> {
+    pub async fn execute(
+        &self,
+        action: &InstallActionType,
+    ) -> Result<bool, Box<dyn Error + Send + Sync>> {
         let pattern = r"(.+)\s*(==|>=|<=|!=|<|>|contains|!contains)\s*(.+)";
         let re = Regex::new(pattern).unwrap();
 
@@ -110,14 +113,17 @@ impl ConditionalCommand {
     }
 }
 
-pub struct ConditionalCommandExecutor{
-}
+pub struct ConditionalCommandExecutor {}
 
 use async_trait::async_trait;
 
 #[async_trait]
 impl ActionFn for ConditionalCommandExecutor {
-    async fn execute_command(&self, json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>>{
+    async fn execute_command(
+        &self,
+        json_data: &Value,
+        action: &InstallActionType,
+    ) -> Result<bool, Box<dyn Error + Send + Sync>> {
         let cmd: ConditionalCommand = from_value(json_data.clone())?;
 
         return cmd.execute(action).await;

@@ -1,4 +1,4 @@
-use super::common::{expand_string_deserializer, InstallActionType, ActionFn};
+use super::common::{expand_string_deserializer, ActionFn, InstallActionType};
 
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
@@ -13,7 +13,10 @@ struct WingetCommand {
 }
 
 impl WingetCommand {
-    pub fn execute(&self, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>> {
+    pub fn execute(
+        &self,
+        action: &InstallActionType,
+    ) -> Result<bool, Box<dyn Error + Send + Sync>> {
         let mut exec: String = String::from("winget ");
         match action {
             InstallActionType::INSTALL => {
@@ -41,15 +44,17 @@ impl WingetCommand {
     }
 }
 
-
-pub struct WingetCommandExecutor{
-}
+pub struct WingetCommandExecutor {}
 
 #[async_trait]
 impl ActionFn for WingetCommandExecutor {
-    async fn execute_command(&self, json_data: &Value, action: &InstallActionType) -> Result<bool, Box<dyn Error  + Send + Sync>> {
+    async fn execute_command(
+        &self,
+        json_data: &Value,
+        action: &InstallActionType,
+    ) -> Result<bool, Box<dyn Error + Send + Sync>> {
         let cmd: WingetCommand = from_value(json_data.clone())?;
-    
+
         return cmd.execute(action);
     }
 }
