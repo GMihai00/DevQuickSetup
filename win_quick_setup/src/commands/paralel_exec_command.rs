@@ -8,6 +8,8 @@ use serde_json::{from_value, json, Value};
 use futures::future;
 use tokio::task;
 
+use log::debug;
+
 use super::super::rendering::render;
 
 #[derive(Deserialize, Serialize)]
@@ -16,22 +18,41 @@ struct ParalelExecCommand {
 }
 
 impl ParalelExecCommand {
+    fn handle_resolved_task<E: std::fmt::Debug>(
+        &self,
+        item_resolved: Result<Result<bool, Box<dyn Error + Send + Sync>>, E>,
+        idx: usize,
+    ) -> Result<(), Box<dyn Error + Send + Sync>> {
+        match item_resolved {
+            Ok(value) => match value {
+                Ok(ret) => {
+                    if !ret {
+                        return Err(format!("Paralel task at index {} failed", idx).into());
+                    }
+
+                    return Ok(());
+                }
+                Err(err) => {
+                    return Err(err);
+                }
+            },
+            Err(err) => {
+                return Err(format!("Task at index {} failed with error: {:?}", idx, err).into());
+            }
+        }
+    }
     pub async fn execute(
         &self,
         action: &InstallActionType,
     ) -> Result<bool, Box<dyn Error + Send + Sync>> {
         if let Value::Array(obj) = &self.run {
-            println!("Paralel exex");
             let mut tasks = vec![];
             for value in obj.iter() {
                 if let Value::Object(object) = value {
                     if object.len() != 1 {
                         let json_string = serde_json::to_string(&object)
                             .expect("Failed to convert JSON to string");
-                        panic!(
-                            "Failed to found matching instruction for json: {}",
-                            json_string
-                        );
+                        return Err(format!("Invalid instruction found: {}", json_string).into());
                     }
 
                     let encapsulated_command = json!([object.clone()]);
@@ -43,25 +64,10 @@ impl ParalelExecCommand {
                 }
             }
 
-            println!("Merging futures");
-
             let (item_resolved, idx, remaining_futures) = future::select_all(tasks).await;
 
-            match item_resolved {
-                Ok(value) => match value {
-                    Ok(ret) => {
-                        if !ret {
-                            println!("One of the paralel ran commands failed");
-                            return Ok(false);
-                        }
-                    }
-                    Err(err) => {
-                        return Err(err);
-                    }
-                },
-                Err(err) => {
-                    panic!("Task at index {} failed with error: {:?}", idx, err);
-                }
+            if let Err(err) = self.handle_resolved_task(item_resolved, idx) {
+                return Err(err);
             }
 
             let mut futures = remaining_futures;
@@ -69,21 +75,8 @@ impl ParalelExecCommand {
             while !futures.is_empty() {
                 let (item_resolved, idx, remaining_futures) = future::select_all(futures).await;
 
-                match item_resolved {
-                    Ok(value) => match value {
-                        Ok(ret) => {
-                            if !ret {
-                                println!("One of the paralel ran commands failed");
-                                return Ok(false);
-                            }
-                        }
-                        Err(err) => {
-                            return Err(err);
-                        }
-                    },
-                    Err(err) => {
-                        panic!("Task at index {} failed with error: {:?}", idx, err);
-                    }
+                if let Err(err) = self.handle_resolved_task(item_resolved, idx) {
+                    return Err(err);
                 }
 
                 futures = remaining_futures;
@@ -91,7 +84,7 @@ impl ParalelExecCommand {
         } else {
             let json_string =
                 serde_json::to_string(&self.run).expect("Failed to convert JSON to string");
-            panic!("Invalid syntax, comands are supposed to be contained into an array of objects, found {}", json_string);
+            return Err(format!("Invalid syntax, comands are supposed to be contained into an array of objects, found {}", json_string).into());
         }
 
         return Ok(true);
@@ -109,8 +102,17 @@ impl ActionFn for ParalelExecCommandExecutor {
         json_data: &Value,
         action: &InstallActionType,
     ) -> Result<bool, Box<dyn Error + Send + Sync>> {
-        let cmd: ParalelExecCommand = from_value(json_data.clone())?;
+        debug!("Attempting to execute ParalelExecCommand");
 
-        return cmd.execute(action).await;
+        match from_value::<ParalelExecCommand>(json_data.clone()) {
+            Ok(cmd) => {
+                return cmd.execute(action).await;
+            }
+            Err(err) => {
+                return Err(
+                    format!("Failed to convert data to ParalelExecCommand, err: {}", err).into(),
+                );
+            }
+        }
     }
 }

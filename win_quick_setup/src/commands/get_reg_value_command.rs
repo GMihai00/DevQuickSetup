@@ -9,6 +9,7 @@ use std::error::Error;
 use winreg::enums::{HKEY_CURRENT_USER, KEY_READ};
 use winreg::RegKey;
 
+use log::{debug, warn};
 #[derive(Deserialize, Serialize)]
 struct GetRegistryValueCommand {
     #[serde(deserialize_with = "expand_string_deserializer")]
@@ -29,6 +30,22 @@ fn default_can_fail_option() -> bool {
 }
 
 impl GetRegistryValueCommand {
+    fn handle_err_case(&self, err: std::io::Error) -> Result<bool, Box<dyn Error + Send + Sync>> {
+        if !self.can_fail {
+            return Err(format!(
+                "Failed to get registry value, key: \"{}\" path: \"{}\" err {}",
+                self.key_name, self.reg_path, err
+            )
+            .into());
+        } else {
+            warn!(
+                "Failed to get registry value, key: \"{}\" path: \"{}\" err {}",
+                self.key_name, self.reg_path, err
+            );
+            return Ok(true);
+        }
+    }
+
     pub fn execute(
         &self,
         _action: &InstallActionType,
@@ -46,22 +63,12 @@ impl GetRegistryValueCommand {
                 Err(_) => match subkey.get_value::<u32, _>(&self.key_name.as_str()) {
                     Ok(dword_value) => set_install_value(&self.install_key.as_str(), dword_value),
                     Err(err) => {
-                        if !self.can_fail {
-                            return Err(err.into());
-                        } else {
-                            println!("WARNING: Failed to get reg key, err {}", err);
-                            return Ok(true);
-                        }
+                        return self.handle_err_case(err);
                     }
                 },
             },
             Err(err) => {
-                if !self.can_fail {
-                    return Err(err.into());
-                } else {
-                    println!("WARNING: Failed to get reg key, err {}", err);
-                    return Ok(true);
-                }
+                return self.handle_err_case(err);
             }
         }
 
@@ -80,8 +87,19 @@ impl ActionFn for GetRegistryValueCommandExecutor {
         json_data: &Value,
         action: &InstallActionType,
     ) -> Result<bool, Box<dyn Error + Send + Sync>> {
-        let cmd: GetRegistryValueCommand = from_value(json_data.clone())?;
+        debug!("Attempting to execute GetRegistryValueCommand");
 
-        return cmd.execute(action);
+        match from_value::<GetRegistryValueCommand>(json_data.clone()) {
+            Ok(cmd) => {
+                return cmd.execute(action);
+            }
+            Err(err) => {
+                return Err(format!(
+                    "Failed to convert data to GetRegistryValueCommand, err: {}",
+                    err
+                )
+                .into());
+            }
+        }
     }
 }

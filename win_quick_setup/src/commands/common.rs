@@ -8,6 +8,10 @@ use std::error::Error;
 use std::option::Option;
 use std::sync::Mutex;
 
+use log::warn;
+
+// if in the feature chocolatey will no longer be installed in env:ProgramData\\chocolatey this path will need to be changed
+pub const REFRESHENV_COMMAND: &str ="Set-ExecutionPolicy Bypass -Scope Process; Import-Module $env:ProgramData\\chocolatey\\helpers\\chocolateyProfile.psm1;refreshenv;";
 #[derive(Clone)]
 pub enum InstallActionType {
     INSTALL,
@@ -65,7 +69,7 @@ pub fn expand_string(input_string: &str) -> String {
                 match install_val {
                     Some(val) => val.to_string(),
                     None => {
-                        println!("Failed to find install value {}", captured_value);
+                        warn!("Failed to find install value: \"{}\"", captured_value);
                         return captured_value.to_owned().to_string();
                     }
                 }

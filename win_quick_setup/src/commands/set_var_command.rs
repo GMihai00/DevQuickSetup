@@ -4,6 +4,8 @@ use serde::Serialize;
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
 use std::error::Error;
+
+use log::debug;
 #[derive(Deserialize, Serialize)]
 struct SetVarCommand<T: Clone + Serialize> {
     key: String,
@@ -50,25 +52,48 @@ impl ActionFn for SetVarCommandExecutor {
         json_data: &Value,
         action: &InstallActionType,
     ) -> Result<bool, Box<dyn Error + Send + Sync>> {
+        debug!("Attempting to execute SetVarCommand");
+
         match json_data.get("value") {
             Some(value) => match value {
-                Value::Bool(_) => {
-                    let cmd: SetVarCommand<bool> = from_value(json_data.clone())?;
-
-                    return cmd.execute(action);
-                }
-                Value::Number(_) => {
-                    let cmd: SetVarCommand<u32> = from_value(json_data.clone())?;
-
-                    return cmd.execute(action);
-                }
-                Value::String(_) => {
-                    let cmd: SetStringVarCommand = from_value(json_data.clone())?;
-
-                    return cmd.execute(action);
-                }
+                Value::Bool(_) => match from_value::<SetVarCommand<bool>>(json_data.clone()) {
+                    Ok(cmd) => {
+                        return cmd.execute(action);
+                    }
+                    Err(err) => {
+                        return Err(format!(
+                            "Failed to convert data to SetVarCommand<bool>, err: {}",
+                            err
+                        )
+                        .into());
+                    }
+                },
+                Value::Number(_) => match from_value::<SetVarCommand<u32>>(json_data.clone()) {
+                    Ok(cmd) => {
+                        return cmd.execute(action);
+                    }
+                    Err(err) => {
+                        return Err(format!(
+                            "Failed to convert data to SetVarCommand<u32>, err: {}",
+                            err
+                        )
+                        .into());
+                    }
+                },
+                Value::String(_) => match from_value::<SetStringVarCommand>(json_data.clone()) {
+                    Ok(cmd) => {
+                        return cmd.execute(action);
+                    }
+                    Err(err) => {
+                        return Err(format!(
+                            "Failed to convert data to SetStringVarCommand, err: {}",
+                            err
+                        )
+                        .into());
+                    }
+                },
                 _ => {
-                    return Err("Unsupported data type".into());
+                    return Err("Unsupported json data type found".into());
                 }
             },
             _ => {

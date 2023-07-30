@@ -39,6 +39,7 @@ impl ExecutorFactory {
             "delete_reg_key" => return Box::new(DeleteRegistryValueCommandExecutor {}),
             "paralel" => return Box::new(ParalelExecCommandExecutor {}),
             _ => {
+                // OK to panic here
                 panic!("Failed to create command corresponding to name: {}", name)
             }
         }

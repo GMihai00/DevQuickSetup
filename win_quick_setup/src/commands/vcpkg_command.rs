@@ -1,12 +1,11 @@
-use super::common::{expand_string_deserializer, ActionFn, InstallActionType};
+use super::common::{expand_string_deserializer, ActionFn, InstallActionType, REFRESHENV_COMMAND};
 
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
 use std::error::Error;
 use std::process::Command;
 
-// if in the feature chocolatey will no longer be installed in env:ProgramData\\chocolatey this path will need to be changed
-const REFRESHENV_COMMAND: &str ="Set-ExecutionPolicy Bypass -Scope Process; Import-Module $env:ProgramData\\chocolatey\\helpers\\chocolateyProfile.psm1;refreshenv;";
+use log::debug;
 
 #[derive(Deserialize, Serialize)]
 struct VcpkgCommand {
@@ -52,7 +51,7 @@ impl VcpkgCommand {
         }
         exec.push_str(self.module.as_str());
 
-        println!("Executing command: {}", exec);
+        println!("Executing command: \"{}\"", exec);
 
         if exec.len() == 0 {
             return Ok(true);
@@ -73,8 +72,15 @@ impl ActionFn for VcpkgCommandExecutor {
         json_data: &Value,
         action: &InstallActionType,
     ) -> Result<bool, Box<dyn Error + Send + Sync>> {
-        let cmd: VcpkgCommand = from_value(json_data.clone())?;
+        debug!("Attempting to execute VcpkgCommand");
 
-        return cmd.execute(action);
+        match from_value::<VcpkgCommand>(json_data.clone()) {
+            Ok(cmd) => {
+                return cmd.execute(action);
+            }
+            Err(err) => {
+                return Err(format!("Failed to convert data to VcpkgCommand, err: {}", err).into());
+            }
+        }
     }
 }

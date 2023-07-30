@@ -3,19 +3,16 @@ mod executor_factory;
 mod rendering;
 
 use log::{error, info, warn, LevelFilter};
-use serde_json::Value;
 use simplelog::{Config, TermLogger, TerminalMode};
 use std::env;
 use std::error::Error;
 use std::fs;
-use std::fs::File;
-use std::io::Read;
 use std::path::Path;
 use std::process::exit;
 
 use commands::common::set_install_value;
 use commands::common::InstallActionType;
-use rendering::render;
+use rendering::install_config;
 
 fn save_cmd(mut args: Vec<String>) -> Result<(), Box<dyn Error + Send + Sync>> {
     match fs::canonicalize(args[2].clone().as_str()) {
@@ -54,33 +51,6 @@ fn save_cmd(mut args: Vec<String>) -> Result<(), Box<dyn Error + Send + Sync>> {
     }
 }
 
-fn load_config_file(args: &Vec<String>) -> Result<Value, Box<dyn Error + Send + Sync>> {
-    match File::open(&args[2]) {
-        Ok(mut file) => {
-            let mut contents = String::new();
-
-            match file.read_to_string(&mut contents) {
-                Ok(_) => match serde_json::from_str::<Value>(&contents) {
-                    Ok(json_data) => {
-                        return Ok(json_data);
-                    }
-                    Err(err) => {
-                        return Err(format!("Failed to parse json err: {}", err).into());
-                    }
-                },
-                Err(err) => {
-                    return Err(
-                        format!("Failed to read file: \"{}\" err: {}", &args[2], err).into(),
-                    );
-                }
-            }
-        }
-        Err(err) => {
-            return Err(format!("Failed to open file: \"{}\", err: {}", &args[2], err).into());
-        }
-    }
-}
-
 #[tokio::main]
 async fn main() {
     match TermLogger::init(LevelFilter::Trace, Config::default(), TerminalMode::Mixed) {
@@ -106,35 +76,34 @@ async fn main() {
             }
         }
 
-        match load_config_file(&args) {
-            Ok(json_data) => {
-                match save_cmd(args) {
-                    Err(err) => {
-                        warn!(
-                            "Failed to save cmd, this might affect installation, err: {}",
-                            err
-                        );
-                    }
-                    _ => {}
-                }
+        match save_cmd(args.clone()) {
+            Err(err) => {
+                warn!(
+                    "Failed to save cmd, this might affect installation, err: {}",
+                    err
+                );
+            }
+            _ => {}
+        }
 
-                match render(&json_data, &action).await {
-                    Err(err) => {
-                        error!("Failed to install, err: {}", err);
-                        exit(5);
-                    }
-                    _ => {
-                        info!("Instalation finished");
-                    }
+        match install_config(&args[2].clone(), &action).await {
+            Ok(ret) => {
+                if !ret {
+                    error!("One of the commands durring instalation failed, halting execution");
+                    exit(5);
                 }
             }
             Err(err) => {
-                error!("Failed to load config err: {}", err);
+                error!("Failed to install, err: {}", err);
                 exit(5);
             }
         }
-    } else {
-        error!("No arguments passed");
-        exit(2);
+
+        // time elapsed here could be nice
+        info!("Instalation finished");
+        exit(0);
     }
+
+    error!("Invalid arguments passed! Valid cmd example: \"win_quick_setup --install Conf.json\"");
+    exit(2);
 }

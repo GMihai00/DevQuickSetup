@@ -5,6 +5,8 @@ use serde_json::{from_value, Value};
 use std::error::Error;
 use std::io;
 
+use log::debug;
+
 use winreg::enums::{HKEY_CURRENT_USER, KEY_ALL_ACCESS};
 use winreg::RegKey;
 
@@ -34,8 +36,11 @@ impl DeleteRegistryValueCommand {
                 Err(err) => match err.kind() {
                     io::ErrorKind::NotFound => {}
                     _ => {
-                        println!("Failed to delete registry value: {}", err);
-                        return Ok(false);
+                        return Err(format!(
+                            "Failed to delete registry key: \"{}\" path: \"{}\" err: {}",
+                            self.key_name, self.reg_path, err
+                        )
+                        .into());
                     }
                 },
                 _ => {}
@@ -43,8 +48,11 @@ impl DeleteRegistryValueCommand {
             Err(err) => match err.kind() {
                 io::ErrorKind::NotFound => {}
                 _ => {
-                    println!("Failed to open registry key err : {}", err);
-                    return Ok(false);
+                    return Err(format!(
+                        "Failed to open registry key: \"{}\" path: \"{}\" err: {}",
+                        self.key_name, self.reg_path, err
+                    )
+                    .into());
                 }
             },
         }
@@ -64,8 +72,19 @@ impl ActionFn for DeleteRegistryValueCommandExecutor {
         json_data: &Value,
         action: &InstallActionType,
     ) -> Result<bool, Box<dyn Error + Send + Sync>> {
-        let cmd: DeleteRegistryValueCommand = from_value(json_data.clone())?;
+        debug!("Attempting to execute DeleteRegistryValueCommand");
 
-        return cmd.execute(action);
+        match from_value::<DeleteRegistryValueCommand>(json_data.clone()) {
+            Ok(cmd) => {
+                return cmd.execute(action);
+            }
+            Err(err) => {
+                return Err(format!(
+                    "Failed to convert data to DeleteRegistryValueCommand, err: {}",
+                    err
+                )
+                .into());
+            }
+        }
     }
 }

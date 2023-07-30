@@ -6,6 +6,8 @@ use std::error::Error;
 use std::process::Command;
 
 use async_trait::async_trait;
+
+use log::debug;
 #[derive(Deserialize, Serialize)]
 struct WingetCommand {
     #[serde(deserialize_with = "expand_string_deserializer")]
@@ -32,12 +34,12 @@ impl WingetCommand {
         exec.push_str(" --accept-package-agreements ");
         exec.push_str(self.package.as_str());
 
-        println!("Executing command: {}", exec);
+        println!("Executing command: \"{}\"", exec);
 
         if cfg!(target_os = "windows") {
             Command::new("cmd").args(&["/C", &exec.as_str()]).status()?;
         } else {
-            panic!("Winget command not allowed on OS other then windows");
+            return Err("Winget command not allowed on OS other then windows".into());
         };
 
         return Ok(true);
@@ -53,8 +55,15 @@ impl ActionFn for WingetCommandExecutor {
         json_data: &Value,
         action: &InstallActionType,
     ) -> Result<bool, Box<dyn Error + Send + Sync>> {
-        let cmd: WingetCommand = from_value(json_data.clone())?;
+        debug!("Attempting to execute WingetCommand");
 
-        return cmd.execute(action);
+        match from_value::<WingetCommand>(json_data.clone()) {
+            Ok(cmd) => {
+                return cmd.execute(action);
+            }
+            Err(err) => {
+                return Err(format!("Failed to convert data to VcpkgCommand, err: {}", err).into());
+            }
+        }
     }
 }

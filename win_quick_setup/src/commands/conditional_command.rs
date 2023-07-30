@@ -2,6 +2,8 @@ use super::common::{expand_string_deserializer, ActionFn, InstallActionType};
 
 use std::error::Error;
 
+use log::debug;
+
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, json, Value};
 
@@ -35,6 +37,8 @@ impl ConditionalCommand {
         &self,
         action: &InstallActionType,
     ) -> Result<bool, Box<dyn Error + Send + Sync>> {
+        debug!("Checking condition: {}", self.condition);
+
         let pattern = r"(.+)\s*(==|>=|<=|!=|<|>|contains|!contains)\s*(.+)";
         let re = Regex::new(pattern).unwrap();
 
@@ -104,11 +108,19 @@ impl ConditionalCommand {
                     }
                 }
                 _ => {
-                    return Err("Internal error".into());
+                    return Err(format!(
+                        "Internal error, {} not a valid comparison operator",
+                        operator
+                    )
+                    .into());
                 }
             }
         } else {
-            return Err("No match found, invalid if statement!".into());
+            return Err(format!(
+                "Invalid if statement, condition \"{}\" doesn't match pattern \"{}\"",
+                self.condition, pattern
+            )
+            .into());
         }
     }
 }
@@ -124,8 +136,17 @@ impl ActionFn for ConditionalCommandExecutor {
         json_data: &Value,
         action: &InstallActionType,
     ) -> Result<bool, Box<dyn Error + Send + Sync>> {
-        let cmd: ConditionalCommand = from_value(json_data.clone())?;
+        debug!("Attempting to execute ConditionalCommand");
 
-        return cmd.execute(action).await;
+        match from_value::<ConditionalCommand>(json_data.clone()) {
+            Ok(cmd) => {
+                return cmd.execute(action).await;
+            }
+            Err(err) => {
+                return Err(
+                    format!("Failed to convert data to ConditionalCommand, err: {}", err).into(),
+                );
+            }
+        }
     }
 }

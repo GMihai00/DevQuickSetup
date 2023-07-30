@@ -1,4 +1,4 @@
-use super::common::{expand_string_deserializer, ActionFn, InstallActionType};
+use super::common::{expand_string_deserializer, ActionFn, InstallActionType, REFRESHENV_COMMAND};
 
 use serde_derive::{Deserialize, Serialize};
 use serde_json::{from_value, Value};
@@ -6,8 +6,7 @@ use std::env;
 use std::error::Error;
 use std::process::Command;
 
-// if in the feature chocolatey will no longer be installed in env:ProgramData\\chocolatey this path will need to be changed
-const REFRESHENV_COMMAND: &str ="Set-ExecutionPolicy Bypass -Scope Process; Import-Module $env:ProgramData\\chocolatey\\helpers\\chocolateyProfile.psm1;refreshenv;";
+use log::{debug, warn};
 
 #[derive(Deserialize, Serialize)]
 struct PowershellCommand {
@@ -53,6 +52,7 @@ fn default_dir() -> String {
     if let Ok(current_dir) = env::current_dir() {
         return current_dir.to_string_lossy().to_string();
     } else {
+        warn!("Failed to get current directory");
         return String::new();
     }
 }
@@ -106,7 +106,7 @@ impl PowershellCommand {
         }
 
         println!(
-            "Executing command: {} refresh_emv: {}",
+            "Executing command: \"{}\" refresh_emv: {}",
             exec, self.refresh_env
         );
 
@@ -115,19 +115,23 @@ impl PowershellCommand {
         }
 
         if self.preparse {
-            let (exec, args) = shell_words::split(&exec)
-                .map(|parsed| {
-                    parsed
-                        .split_first()
-                        .map(|(exec, args)| (exec.to_string(), args.to_vec()))
-                })
-                .unwrap_or_else(|err| {
-                    eprintln!("Error parsing command: {:?}", err);
-                    panic!("Failed to parse cmdline {}", &exec.as_str());
-                })
-                .expect("Invalid command.");
-
-            return self.run_command(&exec, &args);
+            match shell_words::split(&exec).map(|parsed| {
+                parsed
+                    .split_first()
+                    .map(|(exec, args)| (exec.to_string(), args.to_vec()))
+            }) {
+                Ok(Some((exec, args))) => {
+                    return self.run_command(&exec, &args);
+                }
+                Err(err) => {
+                    return Err(
+                        format!("Failed to parse command line: \"{}\" err: {}", exec, err).into(),
+                    );
+                }
+                Ok(None) => {
+                    return Err(format!("Failed to parse command line: \"{}\"", exec).into());
+                }
+            }
         }
 
         return self.run_command(&exec, &Vec::new());
@@ -144,8 +148,17 @@ impl ActionFn for PowershellCommandExecutor {
         json_data: &Value,
         action: &InstallActionType,
     ) -> Result<bool, Box<dyn Error + Send + Sync>> {
-        let cmd: PowershellCommand = from_value(json_data.clone())?;
+        debug!("Attempting to execute PowershellCommand");
 
-        return cmd.execute(action);
+        match from_value::<PowershellCommand>(json_data.clone()) {
+            Ok(cmd) => {
+                return cmd.execute(action);
+            }
+            Err(err) => {
+                return Err(
+                    format!("Failed to convert data to PowershellCommand, err: {}", err).into(),
+                );
+            }
+        }
     }
 }
