@@ -1,3 +1,7 @@
 [
-    "TO DO"
+    "TO DO",
+    {"ps1": {
+        "install_run": "choco install protoc",
+        "uninstall_run": "choco uninstall protoc"
+    }}
 ]

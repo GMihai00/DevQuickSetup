@@ -1,4 +1,14 @@
 [
-    { "winget": { "package": "OpenJS.NodeJS"} },
-    { "winget": { "package": "Docker.DockerDesktop "} }
+    "there seems to be a issue with winget when installing in paralel",
+    "to check if chocolatey does the same thing",
+    "also there is no reason to do paralel exec for op that write on the disk",
+    "can't write to disk in paralel so undefined if it will lead to speedup/slowdonw",
+    "it's entirely based on hardware components",
+    {"paralel":
+        { "run" : [
+            { "winget": { "package": "OpenJS.NodeJS"} },
+            { "winget": { "package": "Docker.DockerDesktop "} }
+        ]
+        }
+    }
 ]
